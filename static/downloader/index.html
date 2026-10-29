@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Media Downloader</title>
+    <link rel="stylesheet" href="/static/downloader/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        #embed-back { position: fixed; top: 10px; left: 10px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; background: rgba(11,15,25,.85); color: #f3f4f6; font-size: 1rem; line-height: 1; cursor: pointer; }
+        #embed-back[hidden] { display: none; }
+        body.embed { padding-top: 56px !important; }
+    </style>
+</head>
+<body>
+    <button id="embed-back" type="button" aria-label="Kembali" hidden>←</button>
+    <script>
+        (function () {
+            if (!new URLSearchParams(location.search).has('embed') || window.parent === window) return;
+            document.getElementById('embed-back').hidden = false;
+            document.body.classList.add('embed');
+            document.getElementById('embed-back').onclick = () =>
+                parent.postMessage({ type: 'downloader:close' }, location.origin);
+        })();
+    </script>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <div class="main-container">
+        <div class="header">
+            <div class="badge">✦ All-in-One Downloader</div>
+            <h1>Universal Downloader</h1>
+            <p>Download video & foto dari TikTok, IG, YouTube, Pinterest, dan lainnya.</p>
+        </div>
+
+        <div class="input-box">
+            <div class="field-group">
+                <i data-lucide="link" class="input-icon"></i>
+                <input type="url" id="mediaUrl" placeholder="Tempel URL (TikTok, IG, YT, Pinterest...)" autocomplete="off">
+            </div>
+            <button id="btnFetch" class="btn primary">
+                <i data-lucide="download-cloud"></i> Process
+            </button>
+        </div>
+
+        <div id="loading" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p>Memproses media...</p>
+        </div>
+
+        <div id="resultCard" class="result-card hidden">
+            <div class="preview-box">
+                <!-- Thumbnail Cover (Mode Video) -->
+                <img id="resThumb" src="" alt="Thumbnail" class="thumb-img">
+
+                <!-- Slider Foto (Mode Slide TikTok/IG) -->
+                <div id="imageSlider" class="slider-container hidden">
+                    <img id="currentImage" src="" alt="Slide Preview" class="thumb-img">
+                    <div class="slider-controls">
+                        <button id="prevImg" class="slide-btn"><i data-lucide="chevron-left"></i></button>
+                        <span id="imgCounter" class="counter-badge">1 / 1</span>
+                        <button id="nextImg" class="slide-btn"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="res-info">
+                <span id="resPlatform" class="platform-badge">Platform</span>
+                <h3 id="resTitle">Judul Media</h3>
+                <p id="resUploader" class="uploader-text">Uploader</p>
+                
+                <div id="downloadButtons" class="download-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/downloader/script.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

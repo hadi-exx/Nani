@@ -1,0 +1,227 @@
+/* ---------- Dasar ---------- */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* ---------- Overlay & modal (animasi masuk/keluar) ---------- */
+.overlay {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.overlay.is-open {
+  opacity: 1;
+}
+.modal-panel {
+  transform: translateY(12px) scale(0.97);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.overlay.is-open .modal-panel {
+  transform: none;
+}
+
+/* ---------- Loading ---------- */
+.spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 3px solid rgba(96, 165, 250, 0.18);
+  border-top-color: #60a5fa;
+  animation: spin 0.8s linear infinite;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.4rem;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -0.1rem;
+}
+
+/* ---------- Tombol ---------- */
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.6);
+}
+.btn-primary:hover:not(:disabled) { background: #3b82f6; }
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(220, 38, 38, 0.5);
+}
+.btn-danger:hover:not(:disabled) { background: #ef4444; }
+.btn-ghost {
+  background: rgba(30, 41, 59, 0.9);
+  color: #cbd5e1;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.9);
+  color: #f1f5f9;
+}
+.btn-primary:active:not(:disabled),
+.btn-danger:active:not(:disabled),
+.btn-ghost:active:not(:disabled) {
+  transform: scale(0.97);
+}
+button:disabled,
+.btn-primary:disabled,
+.btn-danger:disabled,
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-btn {
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
+}
+.icon-btn:hover:not(:disabled) { background: rgba(148, 163, 184, 0.14); }
+.icon-btn:active:not(:disabled) { transform: scale(0.92); }
+.icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fav-on { color: #fbbf24; }
+
+/* ---------- Kartu file ---------- */
+/* Kartu memakai latar solid (tanpa blur) agar scroll ringan */
+.item-card {
+  background-color: #0f172a;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+  transition: background-color 0.12s ease;
+}
+.item-card.item-grid {
+  contain-intrinsic-size: auto 170px;
+}
+.item-card:hover {
+  background-color: #131e35;
+}
+.item-card.is-selected {
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  background-color: #14213f;
+}
+
+/* Animasi hanya saat pindah folder */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+.open-area {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+.open-area:hover .card-name { color: #60a5fa; }
+
+.card-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.card-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Progress penyimpanan ---------- */
+.quota-bar {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  transition: width 0.6s ease;
+}
+.quota-bar[data-level="warn"] {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+.quota-bar[data-level="danger"] {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* ---------- Hormati pengaturan "kurangi animasi" ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Pemilih folder (pindah) ---------- */
+.move-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  color: #e2e8f0;
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+.move-row:hover:not(:disabled) { background: rgba(51, 65, 85, 0.6); }
+.move-row:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- Tempat sampah ---------- */
+.trash-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  background-color: #0f172a;
+}

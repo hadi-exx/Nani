@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIESKYBXYZ Web</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+    :root { --bg:#0b0f19; --card:rgba(23,31,51,.7); --card-hover:rgba(35,47,76,.85); --primary:#6366f1; --pink:#ec4899; --text:#f3f4f6; --muted:#9ca3af; --border:rgba(255,255,255,.1); }
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at 25% 15%, rgba(99,102,241,.22), transparent 42%), radial-gradient(circle at 80% 85%, rgba(236,72,153,.16), transparent 40%), var(--bg); background-attachment: fixed; color: var(--text); margin: 0; padding: 15px; padding-bottom: 120px; user-select: none; }
+    h1 { color: var(--text); text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 1px; margin: 10px 0 15px 0; background: var(--card); padding: 12px; border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(12px); }
+    h2 { font-size: 14px; color: var(--text); margin: 20px 0 12px 0; background: var(--card); display: inline-block; padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; font-weight: 600; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+    input { flex: 1; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; font-weight: 600; font-size: 14px; }
+    input::placeholder { color: var(--muted); }
+    input:focus { border-color: var(--primary); }
+    button { padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; transition: 0.15s; }
+    button:hover { background: var(--card-hover); }
+    button:active { transform: scale(.97); }
+    .genre-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none; }
+    .genre-container::-webkit-scrollbar { display: none; }
+    .genre-chip { background: var(--card); color: var(--text); padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid var(--border); transition: 0.15s; }
+    .genre-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .grid-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+    .song-card { background: var(--card); padding: 8px; border-radius: 16px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid var(--border); transition: 0.15s; }
+    .song-card:hover { background: var(--card-hover); }
+    .song-card:active { transform: scale(.98); }
+    .song-card img { width: 100%; height: 100px; border-radius: 10px; object-fit: cover; }
+    .song-title { font-weight: 600; font-size: 12px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .song-artist { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .like-btn { position: absolute; top: 12px; right: 12px; background: rgba(11,15,25,.7); border: 1px solid var(--border); color: var(--text); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 10; cursor: pointer; }
+    .player-bar { position: fixed; bottom: 10px; left: 10px; right: 10px; background: var(--card); backdrop-filter: blur(16px); border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,.4); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; z-index: 100; cursor: pointer; border-radius: 18px; }
+    .player-left { display: flex; align-items: center; gap: 10px; width: 70%; }
+    .player-left img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; }
+    .player-info { overflow: hidden; }
+    .player-title { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .player-artist { font-size: 10px; color: var(--muted); }
+    .play-btn { background: var(--primary); border: none; width: 40px; height: 40px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+    .modal-player { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 25% 15%, rgba(99,102,241,.22), transparent 42%), radial-gradient(circle at 80% 85%, rgba(236,72,153,.16), transparent 40%), var(--bg); background-attachment: fixed; z-index: 200; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .modal-cover { width: 100%; max-width: 240px; height: 240px; margin: 0 auto 15px auto; border-radius: 20px; object-fit: cover; box-shadow: 0 12px 36px rgba(99,102,241,.35); }
+    .progress-container { width: 100%; background: var(--card); height: 8px; border-radius: 999px; border: 1px solid var(--border); margin: 15px 0 5px 0; cursor: pointer; overflow: hidden; }
+    .progress-bar { background: linear-gradient(90deg, var(--primary), var(--pink)); height: 100%; width: 0%; }
+    .time-info { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--muted); }
+    .lyrics-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-top: 15px; white-space: pre-wrap; font-size: 13px; font-weight: 400; color: var(--text); line-height: 1.6; max-height: 200px; overflow-y: auto; text-align: center; user-select: text; -webkit-user-select: text; }
+    .menu-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 300; display: none; align-items: flex-end; }
+    .menu-content { background: #111827; width: 100%; border-radius: 22px 22px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); }
+    .menu-item { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .ctrl-btn { width: 44px; height: 44px; border: 1px solid var(--border); background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text); cursor: pointer; }
+    .ctrl-btn:active { transform: scale(.96); }
+    .repeat-active { background: var(--primary) !important; color: #fff !important; }
+    .topbar { display: flex; align-items: stretch; gap: 10px; margin: 10px 0 15px 0; }
+    .topbar h1 { flex: 1; margin: 0; }
+    .back-btn { display: flex; align-items: center; justify-content: center; width: 56px; flex: 0 0 56px; padding: 0; background: var(--card); color: var(--text); text-decoration: none; border: 1px solid var(--border); border-radius: 16px; font-size: 18px; }
+    .back-btn:active { transform: scale(.96); }
+    .toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 10px 16px; font-size: 12px; font-weight: 600; max-width: 90%; text-align: center; z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="back-btn" href="/" aria-label="Kembali ke AI"><i class="fa-solid fa-arrow-left"></i></a>
+    <h1>DIESKYBXYZ</h1>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Cari lagu / artis...">
+    <button onclick="searchSong()"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+
+  <div class="genre-container">
+    <div class="genre-chip active" onclick="loadHome(this)">🏠 Home</div>
+    <div class="genre-chip" onclick="showHistory(this)">📜 Sering Diputar</div>
+    <div class="genre-chip" onclick="showFavorites(this)">⭐ Favorit Saya</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'DJ Remix Viral')">🎧 DJ Remix / TikTok</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Pop Indonesia')">🔥 Pop Indo</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Pop Western Top Hits')">🌐 Barat / Luar</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Indie Indonesia')">🎸 Indie</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Dangdut Koplo')">💃 Dangdut</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Rock Hits')">🤘 Rock</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Jazz Indonesia')">🎷 Jazz</div>
+    <div class="genre-chip" onclick="selectGenre(this, 'Lo-Fi Chill')">☕ Lo-Fi</div>
+  </div>
+
+  <div id="content"><p style="text-align:center; font-weight:800; color: var(--text);">Memuat DIESKYBXYZ Web...</p></div>
+
+  <!-- Bottom Player Bar -->
+  <div class="player-bar" onclick="openModal()">
+    <div class="player-left">
+      <img id="miniCover" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2750%27 height=%2750%27%3E%3Crect width=%2750%27 height=%2750%27 fill=%27%23222%27/%3E%3C/svg%3E" alt="cover">
+      <div class="player-info">
+        <div id="miniTitle" class="player-title">Pilih Lagu</div>
+        <div id="miniArtist" class="player-artist">DIESKYBXYZ Web</div>
+      </div>
+    </div>
+    <div class="player-controls" onclick="event.stopPropagation()">
+      <button class="play-btn" onclick="togglePlay()"><i id="playIcon" class="fa-solid fa-play"></i></button>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal Player -->
+  <div id="modalPlayer" class="modal-player">
+    <div class="modal-header">
+      <i class="fa-solid fa-chevron-down" onclick="closeModal()" style="font-size:22px; cursor:pointer; background: var(--card); color: var(--text); padding:6px; border: 1px solid var(--border); border-radius:8px; box-shadow: 0 6px 18px rgba(0,0,0,.35);"></i>
+      <span style="font-size:13px; font-weight:800; text-transform:uppercase; background: var(--card); color: var(--text); padding:6px 12px; border: 1px solid var(--border); border-radius:8px; box-shadow: 0 6px 18px rgba(0,0,0,.35);">MEMUTAR LAGU</span>
+      <i class="fa-solid fa-ellipsis-vertical" style="font-size:22px; cursor:pointer; background: var(--card); color: var(--text); padding:6px 10px; border: 1px solid var(--border); border-radius:8px; box-shadow: 0 6px 18px rgba(0,0,0,.35);" onclick="openOptionsMenu()"></i>
+    </div>
+
+    <img id="modalCover" class="modal-cover" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27240%27 height=%27240%27%3E%3Crect width=%27240%27 height=%27240%27 fill=%27%23222%27/%3E%3C/svg%3E" alt="cover">
+    <div style="text-align:center; background: var(--card); color: var(--text); border: 1px solid var(--border); padding:10px; border-radius:8px; box-shadow: 0 6px 18px rgba(0,0,0,.35); margin-bottom:10px;">
+      <div id="modalTitle" style="font-size: 16px; font-weight: 800;">-</div>
+      <div id="modalArtist" style="font-size: 12px; color: var(--muted); margin-top: 4px; font-weight:600;">-</div>
+    </div>
+
+    <div class="progress-container" onclick="seekAudio(event)">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+    <div class="time-info">
+      <span id="currentTime">0:00</span>
+      <span id="durationTime">0:00</span>
+    </div>
+
+    <div style="display:flex; justify-content:space-around; align-items:center; margin-top:20px;">
+      <div id="btnShuffle" class="ctrl-btn" onclick="toggleShuffle()"><i class="fa-solid fa-shuffle"></i></div>
+      <div class="ctrl-btn" onclick="prevSong()"><i class="fa-solid fa-backward-step"></i></div>
+      <button class="play-btn" style="width:55px; height:55px; font-size:22px;" onclick="togglePlay()"><i id="modalPlayIcon" class="fa-solid fa-play"></i></button>
+      <div class="ctrl-btn" onclick="nextSong()"><i class="fa-solid fa-forward-step"></i></div>
+      
+      <div id="btnRepeat" class="ctrl-btn" onclick="toggleRepeat()" style="position:relative;">
+        <i class="fa-solid fa-repeat"></i>
+        <span id="repeatBadge" style="position:absolute; top:-6px; right:-6px; background:#ff5252; color: var(--text); font-size:10px; font-weight:800; border: 1px solid var(--border); border-radius:50%; width:16px; height:16px; display:none; align-items:center; justify-content:center;">1</span>
+      </div>
+    </div>
+
+    <h2 style="margin-top:25px;">📜 Lirik Lagu</h2>
+    <div id="lyricsContent" class="lyrics-box">Memuat lirik...</div>
+  </div>
+
+  <!-- Pop-up Options Menu -->
+  <div id="menuOverlay" class="menu-overlay" onclick="closeOptionsMenu()">
+    <div class="menu-content" onclick="event.stopPropagation()">
+      <div style="font-weight:800; font-size:16px; text-transform:uppercase; text-align:center; margin-bottom:5px; color: var(--text);" id="menuSongTitle">Opsi DIESKYBXYZ</div>
+      <div class="menu-item" onclick="setQuality()">
+        <i class="fa-solid fa-signal" style="color: var(--primary);"></i>
+        <span>Kualitas Suara: <b id="qualityLabel">LOW (Sinyal Lemah)</b></span>
+      </div>
+      <div class="menu-item" onclick="downloadCurrentSong()">
+        <i class="fa-solid fa-download" style="color: var(--primary);"></i>
+        <span>Download Lagu MP3</span>
+      </div>
+      <div class="menu-item" onclick="setSleepTimer()">
+        <i class="fa-solid fa-bed" style="color: var(--primary);"></i>
+        <span>Waktu Istirahat (Sleep Timer)</span>
+      </div>
+      <div class="menu-item" onclick="closeOptionsMenu()" style="background:#ff5252; color: var(--text); justify-content:center;">
+        <span>Batal</span>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audioPlayer" preload="none" style="display:none;"></audio>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const API = '/api/music';
+    const EMBED = new URLSearchParams(location.search).has('embed');  // dibuka dari layar AI
+    const audio = $('audioPlayer');
+    const PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect width='50' height='50' fill='%23222'/%3E%3C/svg%3E";
+
+    // Daftar yang sedang ditampilkan (browsing) dan antrean pemutaran (queue) dibuat terpisah,
+    // supaya pindah kategori tidak mengacaukan next/prev, kualitas, atau download.
+    let playlist = [];
+    let queue = [];
+    let currentIndex = -1;
+    let currentSong = null;
+    let streamOffset = 0;          // posisi awal stream (detik), dipakai untuk seek
+    let isShuffle = false;
+    let repeatMode = 0;
+    let audioQuality = 'low';
+    let sleepTimer = null;
+    let navToken = 0;              // mencegah respons lama menimpa tampilan baru
+    let lyricsToken = 0;
+
+    let homeCache = null;
+    const genreCache = {};
+    const knownSongs = new Map();  // id -> data lagu, untuk favorit & pencarian cepat
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+    function loadList(primaryKey, legacyKey) {
+      try {
+        return JSON.parse(localStorage.getItem(primaryKey)) || JSON.parse(localStorage.getItem(legacyKey)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+    function saveList(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+      if (key === 'diesky_history' || key === 'diesky_favs') scheduleLibraryPush();
+    }
+
+    // Favorit & riwayat disimpan di server (data/music) agar tidak hilang saat data browser dibersihkan.
+    let libTimer = null;
+    function pushLibrary() {
+      fetch(`${API}/library`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history: historyList, favorites: favoriteList }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    function scheduleLibraryPush() {
+      clearTimeout(libTimer);
+      libTimer = setTimeout(pushLibrary, 800);
+    }
+    async function loadLibrary() {
+      try {
+        const srv = await getJSON(`${API}/library`);
+        const hasServer = srv.history.length || srv.favorites.length;
+        const hasLocal = historyList.length || favoriteList.length;
+        if (hasServer) {
+          historyList = srv.history;
+          favoriteList = srv.favorites;
+          historyList.forEach(rememberSong);
+          favoriteList.forEach(rememberSong);
+          saveList('diesky_history', historyList);
+          saveList('diesky_favs', favoriteList);
+        } else if (hasLocal) {
+          pushLibrary();   // migrasi: data dari browser dipindah ke server sekali
+        }
+      } catch (e) { /* server belum siap, pakai data lokal */ }
+    }
+
+    // ---------- Status player (lagu, antrean, posisi) disimpan di server ----------
+    let playerTimer = null;
+    let lastPlayerSave = 0;
+    function savePlayer(useKeepalive) {
+      lastPlayerSave = Date.now();
+      if (!currentSong) return;
+      fetch(`${API}/player`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          song: currentSong, queue: queue, index: currentIndex, offset: currentPosition(),
+          pager: queuePager ? { kind: queuePager.kind, value: queuePager.value, page: queuePager.page, hasMore: queuePager.hasMore } : null,
+        }),
+        keepalive: !!useKeepalive,
+      }).catch(() => {});
+    }
+    function savePlayerSoon() {
+      clearTimeout(playerTimer);
+      playerTimer = setTimeout(() => savePlayer(false), 600);
+    }
+    async function loadPlayer() {
+      try {
+        const st = await getJSON(`${API}/player`);
+        if (!st.song) return;
+        currentSong = st.song;
+        rememberSong(st.song);
+        queue = st.queue && st.queue.length ? st.queue : [st.song];
+        if (st.pager) {
+          queuePager = { kind: st.pager.kind, value: st.pager.value, page: st.pager.page, hasMore: st.pager.hasMore,
+                         loading: false, viewToken: -1, items: queue.slice() };
+        }
+        currentIndex = st.index >= 0 && st.index < queue.length ? st.index : 0;
+        showSongUI(st.song);
+        streamOffset = st.offset || 0;
+        loadStream(streamOffset, false);   // siap diputar, tapi tidak otomatis berbunyi
+        $('currentTime').innerText = formatTime(streamOffset);
+        $('durationTime').innerText = formatTime(totalDuration());
+        const total = totalDuration();
+        $('progressBar').style.width = (total > 0 ? Math.min(100, (streamOffset / total) * 100) : 0) + '%';
+        updatePlayIcons(false);
+      } catch (e) { /* tidak ada status tersimpan */ }
+    }
+
+    let historyList = loadList('diesky_history', 'sportify_history');
+    let favoriteList = loadList('diesky_favs', 'sportify_favs');
+
+    function rememberSong(song) { if (song && song.id) knownSongs.set(song.id, song); }
+    historyList.forEach(rememberSong);
+    favoriteList.forEach(rememberSong);
+
+    function toast(message, ms = 3000) {
+      const el = $('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => el.classList.remove('show'), ms);
+    }
+
+    async function getJSON(url) {
+      const res = await fetch(url);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error((data && data.error) || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function showMessage(html) { $('content').innerHTML = html; }
+    function showLoading(text) { showMessage(`<p style="text-align:center; font-weight:800; color: var(--text);">${esc(text)}</p>`); }
+    function showError(text, err) {
+      showMessage(`<p style="text-align:center; color:#ff5252; font-weight:800;">${esc(text)}<br><span style="font-size:11px; color:#ccc;">${esc(err && err.message ? err.message : '')}</span></p>`);
+    }
+
+    // Klik kartu lagu / tombol hati lewat delegasi event (tidak pakai atribut onclick dengan data)
+    $('content').addEventListener('click', e => {
+      const moreBtn = e.target.closest('[data-more]');
+      if (moreBtn) { loadMore(activePagers[moreBtn.dataset.more]); return; }
+      const card = e.target.closest('.song-card');
+      if (!card) return;
+      const id = card.dataset.id;
+      if (e.target.closest('.like-btn')) {
+        e.stopPropagation();
+        toggleFavorite(id);
+        return;
+      }
+      playSongById(id);
+    });
+
+    $('searchInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') searchSong();
+    });
+
+    // ---------- Pagination (pencarian & genre) ----------
+    // queuePager = daftar yang mengisi antrean pemutaran (bisa berbeda dengan tampilan yang sedang dibuka).
+    // viewToken  = navToken saat daftar ini ditampilkan; -1 jika tidak sedang tampil.
+    let queuePager = null;
+    let activePagers = {};   // daftar bertahap yang sedang tampil, per kunci tombol (data-more)
+
+    function moreButtonHtml(key) {
+      return `<button type="button" data-more="${esc(key)}" style="padding:10px 22px; border: 1px solid var(--border); background: var(--primary); font-weight:800; cursor:pointer;">Muat lebih banyak</button>`;
+    }
+
+    function renderPaged(title, p) {
+      p.key = 'main';
+      p.gridId = 'resultGrid';
+      p.moreId = 'moreWrap';
+      p.countId = 'resultCount';
+      activePagers = { main: p };
+      playlist = p.items;
+      playlist.forEach(rememberSong);
+      showMessage(`
+        <h2>${esc(title)} (<span id="resultCount">${p.items.length}</span> Lagu)</h2>
+        <div class="grid-container" id="resultGrid">${renderCards(p.items)}</div>
+        <div id="moreWrap" style="text-align:center; margin:18px 0;">${p.hasMore ? moreButtonHtml('main') : ''}</div>
+      `);
+      if (p.items.length === 0) showMessage(`<h2>${esc(title)}</h2><p style="text-align:center; font-weight:800; color: var(--text);">Tidak ada hasil.</p>`);
+    }
+
+    async function fetchPage(kind, value, page) {
+      if (kind === 'home') return getJSON(`${API}/home/section?key=${encodeURIComponent(value)}&page=${page}`);
+      const url = kind === 'genre'
+        ? `${API}/genre?name=${encodeURIComponent(value)}&page=${page}`
+        : `${API}/search?q=${encodeURIComponent(value)}&page=${page}`;
+      return getJSON(url);
+    }
+
+    // Ambil halaman berikutnya untuk satu pager. Antrean ikut bertambah jika pager itu sedang dipakai.
+    async function loadMore(p) {
+      if (!p || p.loading || !p.hasMore) return;
+      p.loading = true;
+      const viewing = p.viewToken === navToken;
+      const btn = viewing && p.key ? document.querySelector(`[data-more="${p.key}"]`) : null;
+      if (btn) { btn.disabled = true; btn.textContent = 'Memuat...'; }
+      try {
+        const data = await fetchPage(p.kind, p.value, p.page + 1);
+        const fresh = (data.items || []).filter(s => !p.items.some(x => x.id === s.id));
+        p.items = p.items.concat(fresh);
+        p.page += 1;
+        p.hasMore = !!data.hasMore;
+        fresh.forEach(rememberSong);
+        if (p.kind === 'genre') genreCache[p.value] = { items: p.items, page: p.page, hasMore: p.hasMore };
+        if (queuePager === p) queue = queue.concat(fresh);
+        if (viewing) {
+          if (p.key === 'main') playlist = p.items;
+          const grid = p.gridId ? $(p.gridId) : null;
+          if (grid && fresh.length) grid.insertAdjacentHTML('beforeend', renderCards(fresh));
+          const count = p.countId ? $(p.countId) : null;
+          if (count) count.textContent = p.items.length;
+          const wrap = p.moreId ? $(p.moreId) : null;
+          if (wrap) wrap.innerHTML = p.hasMore ? moreButtonHtml(p.key) : '';
+        }
+        savePlayerSoon();
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Muat lebih banyak'; }
+        toast('Gagal memuat lagi: ' + err.message, 3000);
+      } finally {
+        p.loading = false;
+      }
+    }
+
+    async function loadHome(element) {
+      if (element) setActiveChip(element);
+      const token = ++navToken;
+
+      if (homeCache) {
+        renderHome(homeCache);
+        return;
+      }
+
+      showLoading('Memuat beranda...');
+      try {
+        const data = await getJSON(API + '/home');
+        if (token !== navToken) return;
+        homeCache = buildHomePagers(data);
+        renderHome(homeCache);
+      } catch (err) {
+        if (token === navToken) showError('Gagal memuat beranda.', err);
+      }
+    }
+
+    const HOME_SECTIONS = [
+      ['trendingIndo', '🇮🇩 Trending Indonesia'],
+      ['trendingBarat', '🌐 Trending Barat / Luar'],
+      ['djRemix', '🎧 DJ Remix / Jedag Jedug'],
+    ];
+
+    function buildHomePagers(data) {
+      const out = {};
+      HOME_SECTIONS.forEach(([k]) => {
+        const d = data[k] || {};
+        out[k] = { key: k, kind: 'home', value: k, page: 1, items: d.items || [], hasMore: !!d.hasMore,
+                   loading: false, gridId: 'grid-' + k, moreId: 'more-' + k, countId: null, viewToken: -1 };
+      });
+      return out;
+    }
+
+    function renderHome(pagers) {
+      markNotPaged();
+      activePagers = pagers;
+      Object.values(pagers).forEach(p => { p.viewToken = navToken; });
+      playlist = Object.values(pagers).flatMap(p => p.items);
+      playlist.forEach(rememberSong);
+      showMessage(HOME_SECTIONS.map(([k, title]) => `
+        <h2>${title}</h2>
+        <div class="grid-container" id="grid-${k}">${renderCards(pagers[k].items)}</div>
+        <div id="more-${k}" style="text-align:center; margin:14px 0 22px;">${pagers[k].hasMore ? moreButtonHtml(k) : ''}</div>
+      `).join(''));
+    }
+
+    async function selectGenre(element, genreName) {
+      setActiveChip(element);
+      const token = ++navToken;
+      const title = `🎵 Kategori: ${genreName}`;
+      const show = (p) => { p.viewToken = token; renderPaged(title, p); };
+
+      if (genreCache[genreName]) {
+        show(Object.assign({ kind: 'genre', value: genreName, loading: false }, genreCache[genreName]));
+        return;
+      }
+
+      showLoading(`Memuat ${genreName}...`);
+      try {
+        const data = await fetchPage('genre', genreName, 1);
+        if (token !== navToken) return;
+        genreCache[genreName] = { items: data.items || [], page: 1, hasMore: !!data.hasMore };
+        show(Object.assign({ kind: 'genre', value: genreName, loading: false }, genreCache[genreName]));
+      } catch (err) {
+        if (token === navToken) showError(`Gagal memuat ${genreName}.`, err);
+      }
+    }
+
+    function showHistory(element) {
+      setActiveChip(element);
+      navToken++;
+      renderSingleCategory('📜 Sering Diputar', historyList);
+    }
+
+    function showFavorites(element) {
+      setActiveChip(element);
+      navToken++;
+      renderSingleCategory('⭐ Favorit Saya', favoriteList);
+    }
+
+    function setActiveChip(element) {
+      document.querySelectorAll('.genre-chip').forEach(chip => chip.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    function markNotPaged() {
+      Object.values(activePagers).forEach(p => { p.viewToken = -1; });
+      activePagers = {};
+    }
+
+    function renderSingleCategory(title, songs) {
+      markNotPaged();
+      playlist = songs;
+      playlist.forEach(rememberSong);
+      if (songs.length === 0) {
+        showMessage(`<h2>${esc(title)}</h2><p style="text-align:center; font-weight:800; color: var(--text);">Belum ada lagu.</p>`);
+        return;
+      }
+      showMessage(`
+        <h2>${esc(title)} (${songs.length} Lagu)</h2>
+        <div class="grid-container">${renderCards(songs)}</div>
+      `);
+    }
+
+    function renderCards(songs) {
+      return songs.map(song => {
+        rememberSong(song);
+        const isFav = favoriteList.some(f => f.id === song.id);
+        return `
+          <div class="song-card" data-id="${esc(song.id)}">
+            <button class="like-btn" type="button" aria-label="Favorit">
+              <i class="${isFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}" style="${isFav ? 'color:#ff5252;' : 'color: var(--text);'}"></i>
+            </button>
+            <img src="${esc(song.cover)}" alt="cover" loading="lazy">
+            <div class="song-title">${esc(song.judul)}</div>
+            <div class="song-artist">${esc(song.artis)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function searchSong() {
+      const query = $('searchInput').value.trim();
+      if (!query) return;
+      const token = ++navToken;
+
+      showLoading('Mencari...');
+      try {
+        const data = await fetchPage('search', query, 1);
+        if (token !== navToken) return;
+        const p = { kind: 'search', value: query, page: 1, hasMore: !!data.hasMore, loading: false, items: data.items || [], viewToken: token };
+        renderPaged(`Hasil Pencarian: "${query}"`, p);
+      } catch (err) {
+        if (token === navToken) showError('Pencarian gagal.', err);
+      }
+    }
+
+    function ownerPagerFor(id) {
+      return Object.values(activePagers).find(p => p.viewToken === navToken && p.items.some(x => x.id === id)) || null;
+    }
+
+    function playSongById(id) {
+      const owner = ownerPagerFor(id);
+      if (owner) {
+        queue = [...owner.items];
+        queuePager = owner;
+        playAt(queue.findIndex(s => s.id === id));
+        return;
+      }
+      const index = playlist.findIndex(s => s.id === id);
+      if (index === -1) return;
+      queue = [...playlist];
+      queuePager = null;
+      playAt(index);
+    }
+
+    function playAt(index) {
+      currentIndex = index;
+      playSong(queue[index]);
+      if (queuePager && queuePager.hasMore && !queuePager.loading && queue.length - index <= 3) {
+        loadMore(queuePager);
+      }
+    }
+
+    function playSong(song) {
+      if (!song) return;
+      currentSong = song;
+      rememberSong(song);
+      postState();
+
+      historyList = [song, ...historyList.filter(s => s.id !== song.id)].slice(0, 30);
+      saveList('diesky_history', historyList);
+      saveList('sportify_history', historyList);
+
+      showSongUI(song);
+      savePlayerSoon();
+
+      loadStream(0, true);
+      fetchLyrics(song.judul, song.artis, song.durasi);
+    }
+
+    function showSongUI(song) {
+      $('miniTitle').innerText = song.judul;
+      $('miniArtist').innerText = song.artis;
+      $('miniCover').src = song.cover;
+      $('modalTitle').innerText = song.judul;
+      $('modalArtist').innerText = song.artis;
+      $('modalCover').src = song.cover;
+      $('menuSongTitle').innerText = song.judul;
+      updateMediaSession(song);
+    }
+
+    // Memuat stream dari posisi `offset`. Stream dari server tidak bisa di-seek langsung,
+    // jadi seek dilakukan dengan memuat ulang stream dari posisi baru.
+    function loadStream(offset, autoplay) {
+      if (!currentSong) return;
+      const params = new URLSearchParams({ id: currentSong.id, quality: audioQuality });
+      if (offset > 0) params.set('start', String(Math.floor(offset)));
+      streamOffset = offset;
+      audio.src = `${API}/stream?${params.toString()}`;
+      if (autoplay) {
+        audio.play().catch(() => updatePlayIcons(false));
+      }
+    }
+
+    function currentPosition() {
+      return streamOffset + (audio.currentTime || 0);
+    }
+
+    function totalDuration() {
+      if (currentSong && currentSong.durasi > 0) return currentSong.durasi;
+      return isFinite(audio.duration) ? audio.duration : 0;
+    }
+
+    function setQuality() {
+      if (audioQuality === 'low') {
+        audioQuality = 'normal';
+        $('qualityLabel').innerText = 'NORMAL (128k)';
+      } else if (audioQuality === 'normal') {
+        audioQuality = 'high';
+        $('qualityLabel').innerText = 'HIGH (Jernih)';
+      } else {
+        audioQuality = 'low';
+        $('qualityLabel').innerText = 'LOW (Sinyal Lemah)';
+      }
+      if (currentSong) loadStream(currentPosition(), !audio.paused);
+    }
+
+    function toggleFavorite(id) {
+      const song = knownSongs.get(id) || historyList.find(s => s.id === id) || favoriteList.find(s => s.id === id);
+      if (!song) return;
+
+      const idx = favoriteList.findIndex(f => f.id === id);
+      if (idx !== -1) favoriteList.splice(idx, 1);
+      else favoriteList.push(song);
+      saveList('diesky_favs', favoriteList);
+      saveList('sportify_favs', favoriteList);
+
+      const activeChip = document.querySelector('.genre-chip.active');
+      if (activeChip && activeChip.textContent.includes('Favorit')) {
+        showFavorites(activeChip);
+        return;
+      }
+      const isFav = favoriteList.some(f => f.id === id);
+      document.querySelectorAll(`.song-card[data-id="${CSS.escape(id)}"] .like-btn i`).forEach(icon => {
+        icon.className = isFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+        icon.style.color = isFav ? '#ff5252' : 'var(--text)';
+      });
+    }
+
+    async function nextSong() {
+      if (queue.length === 0) return;
+      let index;
+      if (isShuffle && queue.length > 1) {
+        do { index = Math.floor(Math.random() * queue.length); } while (index === currentIndex);
+      } else {
+        index = currentIndex + 1;
+        if (index >= queue.length && queuePager && queuePager.hasMore) {
+          await loadMore(queuePager);   // antrean habis: ambil 20 lagu berikutnya otomatis
+        }
+        if (index >= queue.length) {
+          if (repeatMode === 1) index = 0;
+          else { audio.pause(); savePlayerSoon(); return; }
+        }
+      }
+      playAt(index);
+    }
+
+    function prevSong() {
+      if (queue.length === 0) return;
+      const index = currentIndex <= 0 ? queue.length - 1 : currentIndex - 1;
+      playAt(index);
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      $('btnShuffle').classList.toggle('repeat-active', isShuffle);
+    }
+
+    function toggleRepeat() {
+      repeatMode = (repeatMode + 1) % 3;
+      const btn = $('btnRepeat');
+      const badge = $('repeatBadge');
+      audio.loop = repeatMode === 2;
+      btn.classList.toggle('repeat-active', repeatMode !== 0);
+      badge.style.display = repeatMode === 2 ? 'flex' : 'none';
+    }
+
+    audio.addEventListener('ended', () => {
+      if (!audio.loop) nextSong();
+    });
+
+    audio.addEventListener('play', () => updatePlayIcons(true));
+    audio.addEventListener('pause', () => updatePlayIcons(false));
+
+    audio.addEventListener('error', () => {
+      if (!currentSong || !audio.getAttribute('src')) return;
+      updatePlayIcons(false);
+      toast('Lagu gagal diputar. Coba lagi atau pilih lagu lain.');
+    });
+
+    async function downloadCurrentSong() {
+      closeOptionsMenu();
+      if (!currentSong) return alert('Pilih lagu dulu');
+      toast('Menyiapkan MP3, mohon tunggu...', 60000);
+      try {
+        const params = new URLSearchParams({ id: currentSong.id, name: currentSong.judul });
+        const res = await fetch(`${API}/download?${params.toString()}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentSong.judul.replace(/[\\/:*?"<>|]/g, '')}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        toast('Unduhan siap');
+      } catch (err) {
+        toast('Gagal download: ' + err.message, 5000);
+      }
+    }
+
+    function setSleepTimer() {
+      const minutes = Number(prompt('Masukkan durasi istirahat (dalam menit):', '15'));
+      if (!minutes || minutes <= 0) return;
+
+      if (sleepTimer) clearTimeout(sleepTimer);
+      sleepTimer = setTimeout(() => {
+        audio.pause();
+        sleepTimer = null;
+        alert('Waktu istirahat selesai. Lagu dimatikan otomatis.');
+      }, minutes * 60 * 1000);
+
+      toast(`Timer istirahat diatur untuk ${minutes} menit`);
+      closeOptionsMenu();
+    }
+
+    function openOptionsMenu() { $('menuOverlay').style.display = 'flex'; }
+    function closeOptionsMenu() { $('menuOverlay').style.display = 'none'; }
+
+    async function fetchLyrics(title, artist, duration) {
+      const box = $('lyricsContent');
+      const token = ++lyricsToken;
+      box.textContent = 'Mencari lirik...';
+      try {
+        const data = await getJSON(`${API}/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist || "")}&duration=${encodeURIComponent(duration || 0)}`);
+        if (token !== lyricsToken) return;
+        box.textContent = data.lyrics || 'Lirik lagu ini belum tersedia.';
+      } catch (err) {
+        if (token === lyricsToken) box.textContent = 'Lirik lagu ini belum tersedia.';
+      }
+    }
+
+    function togglePlay() {
+      if (!currentSong) return;
+      if (audio.paused) audio.play().catch(() => updatePlayIcons(false));
+      else audio.pause();
+    }
+
+    function updatePlayIcons(isPlaying) {
+      const icon = isPlaying ? 'fa-pause' : 'fa-play';
+      $('playIcon').className = `fa-solid ${icon}`;
+      $('modalPlayIcon').className = `fa-solid ${icon}`;
+      postState();
+      savePlayerSoon();
+    }
+
+    // Kirim status ke layar AI (mini player). Hanya saat dibuka sebagai layer.
+    function postState() {
+      if (!EMBED || !currentSong) return;
+      parent.postMessage({
+        type: 'music:state',
+        song: { judul: currentSong.judul, artis: currentSong.artis, cover: currentSong.cover },
+        playing: !audio.paused,
+      }, location.origin);
+    }
+
+    // Perintah dari layar AI (mini player)
+    window.addEventListener('message', (e) => {
+      if (!EMBED || e.origin !== location.origin || !e.data || e.data.type !== 'music:cmd') return;
+      if (e.data.cmd === 'toggle') togglePlay();
+      else if (e.data.cmd === 'next') nextSong();
+      else if (e.data.cmd === 'prev') prevSong();
+      else if (e.data.cmd === 'state') postState();
+    });
+
+    if (EMBED) {
+      document.body.classList.add('embed');
+      // Tombol back di layar musik menutup layer, tidak pindah halaman, supaya lagu tetap jalan
+      document.querySelector('.back-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        parent.postMessage({ type: 'music:close' }, location.origin);
+      });
+    }
+
+    function updateMediaSession(song) {
+      if (!('mediaSession' in navigator)) return;
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: song.judul,
+          artist: song.artis,
+          artwork: [{ src: song.cover, sizes: '480x360', type: 'image/jpeg' }],
+        });
+        navigator.mediaSession.setActionHandler('play', () => audio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', prevSong);
+        navigator.mediaSession.setActionHandler('nexttrack', nextSong);
+      } catch (e) {}
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      if (!currentSong) return;
+      if (Date.now() - lastPlayerSave > 5000 && !audio.paused) savePlayer(false);
+      const pos = currentPosition();
+      const total = totalDuration();
+      const pct = total > 0 ? Math.min(100, (pos / total) * 100) : 0;
+      $('progressBar').style.width = pct + '%';
+      $('currentTime').innerText = formatTime(pos);
+      $('durationTime').innerText = formatTime(total);
+    });
+
+    function seekAudio(e) {
+      if (!currentSong) return;
+      const total = totalDuration();
+      if (!total) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      loadStream(ratio * total, !audio.paused);
+    }
+
+    function formatTime(s) {
+      const total = Math.max(0, Math.floor(s || 0));
+      const m = Math.floor(total / 60);
+      const sec = total % 60;
+      return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    function openModal() { $('modalPlayer').style.display = 'flex'; }
+    function closeModal() { $('modalPlayer').style.display = 'none'; }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') savePlayer(true);
+    });
+    window.addEventListener('pagehide', () => savePlayer(true));
+
+    loadLibrary();
+    loadPlayer();
+    loadHome();
+  </script>
+  <script src="/connection.js"></script>
+</body>
+</html>

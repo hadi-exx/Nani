@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DIESKYBYZ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+  :root { --bg:#0b0f19; --card:rgba(23,31,51,.7); --card-hover:rgba(35,47,76,.85); --primary:#6366f1; --pink:#ec4899; --text:#f3f4f6; --muted:#9ca3af; --border:rgba(255,255,255,.1); }
+  * { box-sizing: border-box; }
+  body { margin:0; background: radial-gradient(circle at 25% 15%, rgba(99,102,241,.22), transparent 42%), radial-gradient(circle at 80% 85%, rgba(236,72,153,.16), transparent 40%), var(--bg); background-attachment: fixed; color:var(--text); font-family:'Plus Jakarta Sans', system-ui, sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:rgba(11,15,25,.85); backdrop-filter: blur(12px); border-bottom:1px solid var(--border);
+           padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header a.logo { color:var(--text); font-weight:700; text-decoration:none; font-size:18px; }
+  form.search { flex:1 1 0; display:flex; gap:8px; min-width:0; }
+  form.search input { flex:1; min-width:0; width:100%; }
+  header { min-width:0; }
+  html, body { max-width:100%; overflow-x:hidden; }
+  input[type=search] { flex:1; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:15px; outline:none; }
+  input[type=search]:focus { border-color:var(--primary); }
+  main { padding:16px; max-width:1200px; margin:0 auto; }
+  h1 { font-size:22px; margin:8px 0; font-weight:700; }
+  h2 { font-size:17px; margin:20px 0 10px; color:var(--text); font-weight:600; }
+  a { color:inherit; }
+  button, .btn { background:var(--primary); color:#fff; border:0; padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; font-size:14px; transition:.15s; }
+  button:hover, .btn:hover { filter:brightness(1.1); }
+  button.ghost, .btn.ghost { background:var(--card); color:var(--text); border:1px solid var(--border); }
+  button.on { background:var(--primary); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:14px; }
+  .card { text-decoration:none; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--border); transition:transform .15s, background .15s; }
+  .card:hover { transform:translateY(-2px); background:var(--card-hover); }
+  .poster { aspect-ratio:3/4; display:flex; align-items:center; justify-content:center; font-size:44px; font-weight:700; color:rgba(255,255,255,.85); }
+  .poster.big { width:160px; min-width:160px; aspect-ratio:3/4; border-radius:16px; }
+  .ct { padding:8px 10px 2px; font-size:14px; line-height:1.3; font-weight:600; }
+  .cs { padding:0 10px 10px; font-size:12px; color:var(--muted); }
+  .hero { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:18px; }
+  .hero > div { flex:1; min-width:220px; }
+  .modes { display:flex; gap:8px; margin:12px 0; }
+  .eps { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); gap:8px; }
+  .ep { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 0; text-align:center; text-decoration:none; font-size:14px; }
+  .ep:hover { border-color:var(--primary); }
+  .ep.last { border-color:var(--primary); color:var(--primary); }
+  .player-wrap video { width:100%; max-height:72vh; background:#000; border-radius:16px; display:block; }
+  .bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .bar h2 { margin:0; font-size:16px; }
+  .ctrl { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  select { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px; }
+  .msg { color:var(--muted); padding:20px 0; }
+  .err { color:#f87171; margin-top:12px; }
+  @media (max-width:600px) { .poster.big { width:120px; min-width:120px; } }
+  .grid > * { opacity:0; translate:0 12px; transition:opacity .35s ease, translate .35s ease, transform .15s; }
+  .grid > *.in { opacity:1; translate:0 0; }
+  @media (prefers-reduced-motion: reduce) { .grid > * { transition:none; opacity:1; translate:none; } }
+  .poster { position:relative; overflow:hidden; }
+  .poster img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s; }
+  .poster img.ok { opacity:1; }
+  .ep.seen { opacity:.5; }
+  .hc { position:relative; }
+  .hc .x { position:absolute; top:6px; right:6px; padding:4px 8px; font-size:12px; background:rgba(11,15,25,.85); color:var(--text); }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#/">DIESKYBYZ</a>
+  <form class="search" id="sf">
+    <input type="search" id="q" placeholder="Cari anime..." autocomplete="off">
+    <button type="submit">Cari</button>
+  </form>
+</header>
+<main id="app"><p class="msg">Memuat...</p></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+<script>
+const app = document.getElementById("app");
+const qInput = document.getElementById("q");
+let hlsInst = null;
+
+let io = null;
+function reveal() {
+  if (io) io.disconnect();
+  io = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle("in", e.isIntersecting)),
+    { threshold: 0.05, rootMargin: "0px 0px -4% 0px" });
+  document.querySelectorAll(".grid > *").forEach(el => io.observe(el));
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const enc = encodeURIComponent;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+
+function hueOf(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+
+function posterHtml(title, big, id) {
+  const h = hueOf(title);
+  const cls = big ? "poster big" : "poster";
+  const img = id ? `<img loading="lazy" alt="" src="/anime/poster?id=${enc(id)}&t=${enc(title)}" onload="this.classList.add('ok')" onerror="this.remove()">` : "";
+  return `<div class="${cls}" style="background:linear-gradient(160deg,hsl(${h},55%,38%),hsl(${(h+40)%360},50%,18%))">${esc((title || "?").charAt(0).toUpperCase())}${img}</div>`;
+}
+
+function card(id, title, sub) {
+  return `<a class="card" href="#/anime/${enc(id)}?t=${enc(title)}">${posterHtml(title, false, id)}
+    <div class="ct">${esc(title)}</div><div class="cs">${esc(sub || "")}</div></a>`;
+}
+
+function ago(ts) {
+  if (!ts) return "";
+  const m = Math.floor((Date.now() / 1000 - ts) / 60);
+  if (m < 1) return " · baru saja";
+  if (m < 60) return " · " + m + " mnt lalu";
+  if (m < 1440) return " · " + Math.floor(m / 60) + " jam lalu";
+  return " · " + Math.floor(m / 1440) + " hari lalu";
+}
+
+const histSub = h => "Ep " + h.ep + " · " + (h.watched || []).length + " ditonton" + ago(h.ts);
+
+function currentMode() { return localStorage.getItem("mode") === "dub" ? "dub" : "sub"; }
+
+function setLoading() { app.innerHTML = '<p class="msg">Memuat...</p>'; }
+
+function killPlayer() {
+  if (hlsInst) { hlsInst.destroy(); hlsInst = null; }
+}
+
+async function home(q) {
+  qInput.value = q;
+  setLoading();
+  let html = "";
+  if (!q) {
+    const { history } = await api("/api/anime/history").catch(() => ({ history: [] }));
+    if (history.length) {
+      const all = history.slice().reverse();
+      html += `<div class="row"><h2>Lanjut nonton</h2>${all.length > 12 ? `<a class="btn ghost" href="#/history">Lihat semua (${all.length})</a>` : ""}</div><div class="grid">` +
+        all.slice(0, 12).map(h => card(h.id, h.title, histSub(h))).join("") + "</div>";
+    }
+    html += "<h2>Mulai cari anime di kotak pencarian di atas.</h2>";
+    app.innerHTML = html;
+    reveal();
+    return;
+  }
+  try {
+    const { results } = await api("/api/anime/search?q=" + enc(q));
+    html += "<h2>Hasil untuk &quot;" + esc(q) + "&quot;</h2>";
+    html += results.length
+      ? '<div class="grid">' + results.map(r => card(r.id, r.title)).join("") + "</div>"
+      : '<p class="msg">Tidak ada hasil.</p>';
+  } catch (e) {
+    html += '<p class="err">' + esc(e.message) + "</p>";
+  }
+  app.innerHTML = html;
+  reveal();
+}
+
+async function historyPage() {
+  setLoading();
+  const { history } = await api("/api/anime/history").catch(() => ({ history: [] }));
+  const all = history.slice().reverse();
+  app.innerHTML = `<div class="row"><h1>Riwayat tonton (${all.length})</h1>
+    ${all.length ? '<button class="ghost" id="clr">Hapus semua</button>' : ""}</div>` +
+    (all.length ? '<div class="grid">' + all.map(h =>
+      `<div class="hc">${card(h.id, h.title, histSub(h))}<button class="x" data-id="${esc(h.id)}">Hapus</button></div>`).join("") + "</div>"
+      : '<p class="msg">Belum ada riwayat.</p>');
+  const del = body => api("/api/anime/history/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(historyPage);
+  app.querySelectorAll(".x").forEach(b => b.onclick = e => { e.preventDefault(); del({ id: b.dataset.id }); });
+  const c = document.getElementById("clr");
+  if (c) c.onclick = () => { if (confirm("Hapus semua riwayat?")) del({ all: true }); };
+  reveal();
+}
+
+async function animePage(id, title) {
+  setLoading();
+  try {
+    const { episodes } = await api("/api/anime/episodes?id=" + enc(id));
+    const { history } = await api("/api/anime/history").catch(() => ({ history: [] }));
+    const h = history.find(x => x.id === id);
+    let nextNo = null;
+    if (h) {
+      const i = episodes.findIndex(e => e.no === h.ep);
+      if (i >= 0 && i + 1 < episodes.length) nextNo = episodes[i + 1].no;
+    }
+    const mode = currentMode();
+    const nextBtn = nextNo
+      ? `<a class="btn" href="#/watch/${enc(id)}/${enc(nextNo)}?t=${enc(title)}">Lanjut ep ${esc(nextNo)}</a>`
+      : (h ? `<span class="msg">Sudah tamat / belum ada episode berikutnya</span>` : "");
+    app.innerHTML = `
+      <div class="hero">
+        ${posterHtml(title, true, id)}
+        <div>
+          <h1>${esc(title)}</h1>
+          <p class="msg">${episodes.length} episode</p>
+          <div class="modes">
+            <button data-m="sub" class="${mode === "sub" ? "on" : "ghost"}">Sub</button>
+            <button data-m="dub" class="${mode === "dub" ? "on" : "ghost"}">Dub</button>
+          </div>
+          ${nextBtn}
+        </div>
+      </div>
+      <h2>Episode</h2>
+      <div class="eps">${episodes.map(e =>
+        `<a class="ep ${h && h.ep === e.no ? "last" : (h && (h.watched || []).includes(e.no) ? "seen" : "")}" href="#/watch/${enc(id)}/${enc(e.no)}?t=${enc(title)}">${esc(e.no)}</a>`
+      ).join("")}</div>`;
+    app.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
+      localStorage.setItem("mode", b.dataset.m);
+      animePage(id, title);
+    });
+  } catch (e) {
+    app.innerHTML = `<p class="err">${esc(e.message)}</p><p><a href="#/">← Kembali</a></p>`;
+  }
+}
+
+async function watch(id, ep, title) {
+  killPlayer();
+  const mode = currentMode();
+  app.innerHTML = `
+    <div class="player-wrap">
+      <div class="bar">
+        <a class="btn ghost" href="#/anime/${enc(id)}?t=${enc(title)}">← Daftar episode</a>
+        <h2>${esc(title)} - Episode ${esc(ep)} (${mode})</h2>
+      </div>
+      <video id="v" controls playsinline></video>
+      <div class="ctrl">
+        <button id="prev" disabled>◀ Sebelumnya</button>
+        <select id="qual"><option value="-1">Auto</option></select>
+        <button id="next" disabled>Berikutnya ▶</button>
+      </div>
+      <p class="err" id="err"></p>
+    </div>`;
+  const v = document.getElementById("v");
+  const err = document.getElementById("err");
+  const showErr = m => { err.textContent = m; };
+
+  // tetangga episode (urutan sama seperti ani-cli: ascending)
+  api("/api/anime/episodes?id=" + enc(id)).then(({ episodes }) => {
+    const i = episodes.findIndex(e => e.no === ep);
+    const prev = document.getElementById("prev");
+    const next = document.getElementById("next");
+    if (i > 0) { prev.disabled = false; prev.onclick = () => location.hash = `#/watch/${enc(id)}/${enc(episodes[i-1].no)}?t=${enc(title)}`; }
+    if (i >= 0 && i + 1 < episodes.length) { next.disabled = false; next.onclick = () => location.hash = `#/watch/${enc(id)}/${enc(episodes[i+1].no)}?t=${enc(title)}`; }
+  }).catch(() => {});
+
+  let data;
+  try {
+    data = await api(`/api/anime/stream?id=${enc(id)}&ep=${enc(ep)}&mode=${mode}`);
+  } catch (e) {
+    showErr(e.message);
+    return;
+  }
+
+  if (data.subtitle) {
+    const t = document.createElement("track");
+    t.kind = "subtitles"; t.label = "Subtitle"; t.srclang = "en";
+    t.src = data.subtitle; t.default = true;
+    v.appendChild(t);
+  }
+
+  const saveHistory = () => api("/api/anime/history", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, title, ep }),
+  }).catch(() => {});
+  v.addEventListener("playing", saveHistory, { once: true });
+
+  if (window.Hls && Hls.isSupported()) {
+    const hls = new Hls();
+    hlsInst = hls;
+    hls.loadSource(data.url);
+    hls.attachMedia(v);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      const qual = document.getElementById("qual");
+      hls.levels.forEach((lv, idx) => {
+        const o = document.createElement("option");
+        o.value = idx;
+        o.textContent = lv.height ? lv.height + "p" : Math.round((lv.bitrate || 0) / 1000) + "k";
+        qual.appendChild(o);
+      });
+      qual.onchange = () => { hls.currentLevel = Number(qual.value); };
+    });
+    hls.on(Hls.Events.ERROR, (_, d) => {
+      if (d.fatal) showErr("Gagal memutar: " + d.details);
+    });
+  } else if (v.canPlayType("application/vnd.apple.mpegurl")) {
+    v.src = data.url; // Safari / iOS
+  } else {
+    showErr("Browser ini tidak mendukung HLS.");
+  }
+}
+
+function route() {
+  killPlayer();
+  const raw = location.hash.slice(1) || "/";
+  const [path, qs] = raw.split("?");
+  const params = new URLSearchParams(qs || "");
+  const title = params.get("t") || "";
+  if (path === "/" || path === "") return home(params.get("q") || "");
+  if (path === "/history") return historyPage();
+  if (path.startsWith("/anime/")) return animePage(decodeURIComponent(path.slice(7)), title);
+  if (path.startsWith("/watch/")) {
+    const [id, ep] = path.slice(7).split("/").map(decodeURIComponent);
+    return watch(id, ep, title);
+  }
+  app.innerHTML = '<p class="msg">Halaman tidak ditemukan.</p>';
+}
+
+document.getElementById("sf").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = qInput.value.trim();
+  location.hash = "#/?q=" + enc(q);
+});
+window.addEventListener("hashchange", route);
+route();
+</script>
+<script>
+// Mode embed: dibuka sebagai layer di dalam termux-ai (?embed=1)
+(function () {
+  if (!new URLSearchParams(location.search).has("embed") || window.parent === window) return;
+  document.body.style.paddingTop = "44px";
+  const bar = document.createElement("div");
+  Object.assign(bar.style, { position: "fixed", top: "0", left: "0", right: "0", height: "44px",
+    display: "flex", alignItems: "center", padding: "0 10px", background: "#0b0f19", zIndex: "1000" });
+  bar.innerHTML = '<button id="embed-back" type="button" aria-label="Kembali ke AI">←</button>';
+  const btn = bar.querySelector("button");
+  Object.assign(btn.style, { background: "#6366f1", color: "#fff", border: "0",
+    width: "36px", height: "32px", padding: "0", font: "inherit", fontSize: "18px", fontWeight: "700",
+    lineHeight: "1", cursor: "pointer" });
+  document.body.prepend(bar);
+  btn.onclick = () => parent.postMessage({ type: "anime:close" }, location.origin);
+
+  function state() {
+    const v = document.querySelector("video");
+    const raw = location.hash.slice(1);
+    const watching = raw.startsWith("/watch/") && !!v;
+    let title = "", ep = "";
+    if (raw.startsWith("/watch/")) {
+      const [path, qs] = raw.split("?");
+      ep = decodeURIComponent(path.split("/")[3] || "");
+      title = new URLSearchParams(qs || "").get("t") || "";
+    }
+    parent.postMessage({ type: "anime:state", active: watching, title, ep,
+      playing: watching && !v.paused }, location.origin);
+  }
+  window.addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "anime:cmd") return;
+    const v = document.querySelector("video");
+    if (e.data.cmd === "toggle" && v) (v.paused ? v.play() : v.pause());
+    state();
+  });
+  document.addEventListener("play", state, true);
+  document.addEventListener("pause", state, true);
+  setInterval(state, 1000);
+  state();
+})();
+</script>
+</body>
+</html>

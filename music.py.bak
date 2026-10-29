@@ -1,0 +1,576 @@
+"""Backend musik (dipindah dari Express ke Flask, satu proses dengan AI).
+
+Semua pemanggilan yt-dlp dan ffmpeg memakai daftar argumen (tanpa shell),
+jadi input dari browser tidak bisa menyisipkan perintah.
+"""
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlencode
+
+import requests
+from flask import Blueprint, Response, after_this_request, jsonify, request, send_file
+
+import storage_layout
+from ytdlp_cookies import cookie_args
+
+bp = Blueprint("music", __name__, url_prefix="/api/music")
+PAGE_SIZE = 20
+LIB_FILE = os.path.join(storage_layout.MUSIC_DIR, "library.json")
+PLAYER_FILE = os.path.join(storage_layout.MUSIC_DIR, "player.json")
+_store_lock = threading.Lock()
+
+YTDLP = os.getenv("YTDLP_BIN", "yt-dlp")
+FFMPEG = os.getenv("FFMPEG_BIN", "ffmpeg")
+
+VALID_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
+QUALITY = {
+    "low": ("ba[abr<=64]/ba/b", "64k"),
+    "normal": ("ba[abr<=128]/ba/b", "128k"),
+    "high": ("ba/b", "256k"),
+}
+CACHE_TTL = 600  # detik
+
+_cache = {}
+_cache_lock = threading.Lock()
+
+
+class YtError(Exception):
+    pass
+
+
+def _cache_get(key):
+    with _cache_lock:
+        hit = _cache.get(key)
+        if hit and time.time() - hit[0] < CACHE_TTL:
+            return hit[1]
+    return None
+
+
+def _cache_set(key, data):
+    # Hasil kosong tidak disimpan, supaya pencarian berikutnya dicoba lagi.
+    if not data:
+        return
+    with _cache_lock:
+        if len(_cache) > 200:
+            _cache.pop(next(iter(_cache)))
+        _cache[key] = (time.time(), data)
+
+
+def _run_yt(args, timeout):
+    try:
+        proc = subprocess.run(
+            [YTDLP, *cookie_args(), *args], capture_output=True, text=True, timeout=timeout
+        )
+    except FileNotFoundError:
+        raise YtError("yt-dlp belum terpasang di server")
+    except subprocess.TimeoutExpired:
+        raise YtError("yt-dlp melewati batas waktu")
+    if proc.returncode != 0:
+        raise YtError((proc.stderr or "yt-dlp gagal").strip()[-300:])
+    return proc.stdout
+
+
+def _clean_title(title):
+    cleaned = re.sub(r"[\(\[\{].*?[\)\]\}]", "", title).strip()
+    return cleaned or title.strip()
+
+
+def _clean_filename(name):
+    name = re.sub(r"[\\/:*?\"<>|\x00-\x1f]", "", str(name or ""))
+    return re.sub(r"\s+", " ", name).strip()[:120]
+
+
+def search_yt(query, limit):
+    q = str(query or "").strip()[:200]
+    if not q:
+        return []
+    key = f"s:{limit}:{q.lower()}"
+    hit = _cache_get(key)
+    if hit is not None:
+        return hit
+
+    out = _run_yt(
+        ["--dump-json", "--flat-playlist", "--no-warnings", f"ytsearch{limit}:{q}"],
+        30,
+    )
+    results = []
+    for line in out.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            data = json.loads(line)
+        except ValueError:
+            continue
+        vid = data.get("id") or ""
+        if not data.get("title") or not VALID_ID.match(vid):
+            continue
+        results.append({
+            "id": vid,
+            "judul": _clean_title(data["title"]),
+            "artis": data.get("uploader") or data.get("channel") or "Artis",
+            "cover": f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
+            "durasi": float(data.get("duration") or 0),
+        })
+        if len(results) >= limit:
+            break
+
+    _cache_set(key, results)
+    return results
+
+
+def _error(message, status=502):
+    return jsonify({"error": message}), status
+
+
+HOME_JOBS = {
+    "trendingIndo": "Lagu Populer Indonesia Terbaru",
+    "trendingBarat": "Top Global Hits Song",
+    "djRemix": "DJ Remix Viral TikTok Full Beat",
+}
+
+
+@bp.get("/home")
+def home():
+    """Halaman pertama tiap bagian beranda. Halaman berikutnya lewat /home/section."""
+    data, errors = {}, []
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        futures = {k: pool.submit(_paged, q, 1) for k, q in HOME_JOBS.items()}
+        for key, fut in futures.items():
+            try:
+                data[key] = fut.result()
+            except YtError as e:
+                data[key] = {"items": [], "page": 1, "hasMore": False}
+                errors.append(str(e))
+    if not any(v["items"] for v in data.values()):
+        return _error(errors[0] if errors else "Beranda kosong")
+    return jsonify(data)
+
+
+@bp.get("/home/section")
+def home_section():
+    key = str(request.args.get("key") or "")
+    if key not in HOME_JOBS:
+        return _error("Bagian tidak dikenal", 400)
+    try:
+        return jsonify(_paged(HOME_JOBS[key], _page_arg()))
+    except YtError as e:
+        return _error(str(e))
+
+
+def _page_arg():
+    try:
+        return max(1, min(50, int(request.args.get("page") or 1)))
+    except ValueError:
+        return 1
+
+
+def _paged(query, page):
+    """Ambil halaman ke-`page`. yt-dlp mengambil sampai page*PAGE_SIZE hasil, lalu diiris."""
+    limit = page * PAGE_SIZE
+    items = search_yt(query, limit)
+    chunk = items[(page - 1) * PAGE_SIZE: page * PAGE_SIZE]
+    return {"items": chunk, "page": page, "hasMore": len(items) >= limit}
+
+
+@bp.get("/genre")
+def genre():
+    name = str(request.args.get("name") or "Pop")[:80]
+    try:
+        return jsonify(_paged(f"{name} Single Hits", _page_arg()))
+    except YtError as e:
+        return _error(str(e))
+
+
+@bp.get("/search")
+def search():
+    query = str(request.args.get("q") or "").strip()
+    if not query:
+        return _error("Kata kunci kosong", 400)
+    try:
+        return jsonify(_paged(query, _page_arg()))
+    except YtError as e:
+        return _error(str(e))
+
+
+LRCLIB_API = "https://lrclib.net/api"
+LRCLIB_HEADERS = {"User-Agent": "termux-ai/1.0 (pemakaian pribadi)"}
+# Bagian judul yang sering membuat pencocokan lirik gagal, misalnya "(Official Video)"
+_LYRIC_NOISE = re.compile(
+    r"\s*[\(\[\{][^\)\]\}]*(official|lyrics?|video|audio|hd|4k|mv|visualizer|remaster)[^\)\]\}]*[\)\]\}]\s*",
+    re.I,
+)
+_LRC_TAG = re.compile(r"^\s*\[[0-9:.]+\]\s?", re.M)
+
+
+class LyricsNetworkError(Exception):
+    pass
+
+
+def _lyric_query(title, artist):
+    t = _LYRIC_NOISE.sub(" ", title)
+    t = re.sub(r"\s+", " ", t).strip() or title.strip()
+    a = re.sub(r"\s*-\s*Topic$", "", artist.strip(), flags=re.I)
+    a = re.sub(r"VEVO$", "", a, flags=re.I).strip()
+    return t, a
+
+
+def _lyrics_text(rec):
+    """Ambil teks lirik biasa. Kalau hanya ada lirik ber-timestamp, timestamp-nya dibuang."""
+    if not isinstance(rec, dict):
+        return None
+    plain = (rec.get("plainLyrics") or "").strip()
+    if plain:
+        return plain
+    synced = (rec.get("syncedLyrics") or "").strip()
+    if synced:
+        return _LRC_TAG.sub("", synced).strip() or None
+    return None
+
+
+def _curl_get(url, params):
+    """Cadangan kalau Python requests gagal: pakai curl (sudah dipakai untuk anime)."""
+    cmd = ["curl", "-sL", "--max-time", "12", "-A", LRCLIB_HEADERS["User-Agent"],
+           "-w", "\n__HTTP__%{http_code}", url + "?" + urlencode(params)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, check=False)
+    except FileNotFoundError:
+        raise LyricsNetworkError("curl tidak terpasang")
+    if proc.returncode != 0:
+        raise LyricsNetworkError(f"curl exit {proc.returncode}")
+    idx = proc.stdout.rfind(b"\n__HTTP__")
+    if idx < 0:
+        raise LyricsNetworkError("respons curl tidak valid")
+    code = int(proc.stdout[idx + 9:].strip() or b"0")
+    return code, proc.stdout[:idx]
+
+
+def _lrclib(path, params):
+    url = f"{LRCLIB_API}/{path}"
+    status, body, last = None, None, None
+    for _ in range(2):                       # coba requests dua kali
+        try:
+            resp = requests.get(url, params=params, headers=LRCLIB_HEADERS, timeout=12)
+            status, body = resp.status_code, resp.content
+            break
+        except requests.RequestException as e:
+            last = e
+            time.sleep(1)
+    if status is None:                       # requests gagal total: coba curl
+        try:
+            status, body = _curl_get(url, params)
+        except LyricsNetworkError as e:
+            raise LyricsNetworkError(f"requests: {last}; curl: {e}")
+    if status == 404:
+        return None
+    if status != 200:
+        raise LyricsNetworkError(f"HTTP {status}")
+    try:
+        return json.loads(body)
+    except ValueError:
+        raise LyricsNetworkError("respons bukan JSON")
+
+
+def fetch_lyrics(title, artist, duration):
+    t, a = _lyric_query(title, artist)
+    # 1) cocokkan persis (durasi ikut dikirim kalau ada, supaya versi yang tepat)
+    params = {"track_name": t, "artist_name": a}
+    if duration > 0:
+        params["duration"] = str(int(round(duration)))
+    text = _lyrics_text(_lrclib("get", params))
+    if text:
+        return text
+    # 2) cadangan: pencarian longgar, pilih hasil dengan durasi paling dekat
+    results = _lrclib("search", {"track_name": t, "artist_name": a}) or []
+    best = None
+    for r in results:
+        if not _lyrics_text(r):
+            continue
+        diff = abs(float(r.get("duration") or 0) - duration) if duration > 0 else 0.0
+        if best is None or diff < best[0]:
+            best = (diff, r)
+    if best and (duration <= 0 or best[0] <= 5):
+        return _lyrics_text(best[1])
+    return None
+
+
+@bp.get("/lyrics/ping")
+def lyrics_ping():
+    """Cek koneksi ke lrclib.net lewat requests dan curl. Buka: /api/music/lyrics/ping"""
+    out = {}
+    try:
+        resp = requests.get(f"{LRCLIB_API}/search", params={"q": "test"},
+                            headers=LRCLIB_HEADERS, timeout=12)
+        out["requests"] = {"ok": True, "status": resp.status_code}
+    except requests.RequestException as e:
+        out["requests"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+    try:
+        code, _ = _curl_get(f"{LRCLIB_API}/search", {"q": "test"})
+        out["curl"] = {"ok": True, "status": code}
+    except LyricsNetworkError as e:
+        out["curl"] = {"ok": False, "error": str(e)}
+    return jsonify(out)
+
+
+@bp.get("/lyrics")
+def lyrics():
+    title = str(request.args.get("title") or "").strip()
+    artist = str(request.args.get("artist") or "").strip()
+    try:
+        duration = float(request.args.get("duration") or 0)
+    except ValueError:
+        duration = 0.0
+    if not title:
+        return jsonify({"lyrics": "Judul tidak ada"})
+    try:
+        text = fetch_lyrics(title, artist, duration)
+    except LyricsNetworkError as e:
+        print(f"[lyrics] gagal menghubungi lrclib: {e}", flush=True)
+        return jsonify({"lyrics": "Server lirik sedang tidak bisa dihubungi. Coba lagi nanti."})
+    if not text:
+        return jsonify({"lyrics": "Lirik lagu ini belum tersedia."})
+    return jsonify({"lyrics": text})
+
+
+def _kill(*procs):
+    for p in procs:
+        if p is None:
+            continue
+        try:
+            if p.poll() is None:
+                p.kill()
+            p.wait(timeout=2)
+        except Exception:
+            pass
+
+
+@bp.get("/stream")
+def stream():
+    vid = str(request.args.get("id") or "")
+    if not VALID_ID.match(vid):
+        return _error("ID lagu tidak valid", 400)
+
+    fmt, bitrate = QUALITY.get(request.args.get("quality", "low"), QUALITY["low"])
+    try:
+        start = max(0, int(float(request.args.get("start") or 0)))
+    except ValueError:
+        start = 0
+    url = f"https://www.youtube.com/watch?v={vid}"
+
+    yt = ff = None
+    try:
+        yt = subprocess.Popen(
+            [YTDLP, *cookie_args(), "-f", fmt, "--no-playlist", "--no-warnings", "-o", "-", url],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        )
+        ff_args = ["-hide_banner", "-loglevel", "error"]
+        if start > 0:
+            ff_args += ["-ss", str(start)]
+        ff_args += ["-i", "pipe:0", "-vn", "-f", "mp3", "-b:a", bitrate, "pipe:1"]
+        ff = subprocess.Popen(
+            [FFMPEG, *ff_args],
+            stdin=yt.stdout, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        )
+        yt.stdout.close()  # supaya yt-dlp dapat SIGPIPE kalau ffmpeg berhenti
+    except FileNotFoundError as e:
+        _kill(yt, ff)
+        missing = "ffmpeg" if ff is None and yt is not None else "yt-dlp"
+        return _error(f"{missing} belum terpasang di server")
+
+    # Tunggu potongan pertama dulu. Kalau kosong, berarti gagal dan bisa dibalas JSON error.
+    first = ff.stdout.read(16384)
+    if not first:
+        _kill(yt, ff)
+        return _error("Lagu tidak bisa diambil (yt-dlp/ffmpeg gagal)")
+
+    def generate():
+        try:
+            yield first
+            while True:
+                chunk = ff.stdout.read(16384)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            # Dipanggil juga saat browser menutup koneksi (lagu diganti, dijeda lama, dll.)
+            _kill(yt, ff)
+
+    return Response(
+        generate(),
+        mimetype="audio/mpeg",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@bp.get("/download")
+def download():
+    vid = str(request.args.get("id") or "")
+    if not VALID_ID.match(vid):
+        return _error("ID lagu tidak valid", 400)
+    name = _clean_filename(request.args.get("name")) or f"music_{vid}"
+    url = f"https://www.youtube.com/watch?v={vid}"
+
+    tmp = tempfile.mkdtemp(prefix="music-dl-")
+    try:
+        _run_yt(
+            [
+                "-x", "--audio-format", "mp3", "--audio-quality", "0",
+                "--no-playlist", "--no-warnings",
+                "-o", os.path.join(tmp, "%(id)s.%(ext)s"),
+                url,
+            ],
+            300,
+        )
+        files = [f for f in os.listdir(tmp) if f.lower().endswith(".mp3")]
+        if not files:
+            raise YtError("File MP3 tidak terbentuk (pastikan ffmpeg terpasang)")
+    except YtError as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return _error(str(e))
+
+    path = os.path.join(tmp, files[0])
+
+    @after_this_request
+    def _cleanup(resp):
+        shutil.rmtree(tmp, ignore_errors=True)
+        return resp
+
+    return send_file(
+        path,
+        mimetype="audio/mpeg",
+        as_attachment=True,
+        download_name=f"{name}.mp3",
+    )
+
+
+# ---------- Penyimpanan di server (data/music): favorit, riwayat, status player ----------
+def _num(v):
+    try:
+        return max(0.0, float(v or 0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _clean_song(x):
+    if not isinstance(x, dict):
+        return None
+    vid = str(x.get("id") or "")
+    if not VALID_ID.match(vid):
+        return None
+    return {
+        "id": vid,
+        "judul": str(x.get("judul") or "")[:300],
+        "artis": str(x.get("artis") or "")[:200],
+        "cover": str(x.get("cover") or "")[:500],
+        "durasi": _num(x.get("durasi")),
+    }
+
+
+def _clean_list(raw, cap):
+    out, seen = [], set()
+    for item in raw if isinstance(raw, list) else []:
+        song = _clean_song(item)
+        if song and song["id"] not in seen:
+            seen.add(song["id"])
+            out.append(song)
+        if len(out) >= cap:
+            break
+    return out
+
+
+def _clean_pager(x):
+    if not isinstance(x, dict):
+        return None
+    kind = x.get("kind")
+    if kind not in ("search", "genre", "home"):
+        return None
+    try:
+        page = max(1, min(50, int(x.get("page") or 1)))
+    except (TypeError, ValueError):
+        page = 1
+    return {
+        "kind": kind,
+        "value": str(x.get("value") or "")[:200],
+        "page": page,
+        "hasMore": bool(x.get("hasMore")),
+    }
+
+
+def _read_json(path, default):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return default
+    except (OSError, ValueError):
+        return default
+
+
+def _write_json(path, obj):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+
+
+@bp.get("/library")
+def library_get():
+    data = _read_json(LIB_FILE, {})
+    return jsonify({
+        "history": _clean_list(data.get("history"), 30),
+        "favorites": _clean_list(data.get("favorites"), 1000),
+    })
+
+
+@bp.put("/library")
+def library_put():
+    body = request.get_json(silent=True) or {}
+    with _store_lock:
+        _write_json(LIB_FILE, {
+            "history": _clean_list(body.get("history"), 30),
+            "favorites": _clean_list(body.get("favorites"), 1000),
+        })
+    return jsonify({"ok": True})
+
+
+@bp.get("/player")
+def player_get():
+    data = _read_json(PLAYER_FILE, {})
+    song = _clean_song(data.get("song"))
+    queue = _clean_list(data.get("queue"), 500)
+    try:
+        index = int(data.get("index", -1))
+    except (TypeError, ValueError):
+        index = -1
+    try:
+        offset = max(0.0, float(data.get("offset") or 0))
+    except (TypeError, ValueError):
+        offset = 0.0
+    return jsonify({"song": song, "queue": queue, "index": index, "offset": offset,
+                    "pager": _clean_pager(data.get("pager"))})
+
+
+@bp.put("/player")
+def player_put():
+    body = request.get_json(silent=True) or {}
+    song = _clean_song(body.get("song"))
+    queue = _clean_list(body.get("queue"), 500)
+    try:
+        index = int(body.get("index", -1))
+    except (TypeError, ValueError):
+        index = -1
+    try:
+        offset = max(0.0, float(body.get("offset") or 0))
+    except (TypeError, ValueError):
+        offset = 0.0
+    with _store_lock:
+        _write_json(PLAYER_FILE, {"song": song, "queue": queue, "index": index, "offset": offset,
+                                  "pager": _clean_pager(body.get("pager"))})
+    return jsonify({"ok": True})

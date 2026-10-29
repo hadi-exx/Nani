@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#11111b">
+<title>Web Proxy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --crust: #11111b; --base: #1e1e2e; --s0: #313244; --s1: #45475a;
+    --text: #cdd6f4; --sub: #a6adc8; --blue: #89b4fa; --mauve: #cba6f7; --red: #f38ba8;
+    --glass: rgba(30, 30, 46, .65); --line: rgba(255, 255, 255, .07);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text);
+    background: var(--crust); min-height: 100vh; -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(900px 600px at 0% -10%, rgba(137,180,250,.16), transparent 60%),
+      radial-gradient(800px 700px at 110% 0%, rgba(203,166,247,.14), transparent 60%);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 22px 18px 56px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.01em;
+    color: var(--text); text-decoration: none; }
+  .logo { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--blue), var(--mauve)); color: var(--crust); font-weight: 800;
+    box-shadow: 0 8px 24px rgba(137,180,250,.25); }
+  .nav-link { color: var(--sub); text-decoration: none; font-size: 14px; padding: 8px 12px; border-radius: 10px; }
+  .nav-link:hover { background: var(--s0); color: var(--text); }
+
+  .hero { text-align: center; padding: 52px 0 32px; animation: up .6s ease both; }
+  .hero h1 { font-size: clamp(30px, 5vw, 44px); margin: 0 0 12px; letter-spacing: -.03em; line-height: 1.1;
+    background: linear-gradient(90deg, #fff, var(--blue) 40%, var(--mauve));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin: 0 auto 28px; color: var(--sub); max-width: 520px; line-height: 1.55; }
+
+  .search { max-width: 680px; margin: 0 auto; padding: 8px; border-radius: 18px; background: var(--glass);
+    border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(0,0,0,.4); backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px); transition: border-color .2s, box-shadow .2s; }
+  .search:focus-within { border-color: rgba(137,180,250,.55); box-shadow: 0 0 0 4px rgba(137,180,250,.14), 0 24px 60px rgba(0,0,0,.4); }
+  .search input { width: 100%; background: transparent; border: 0; outline: none; color: var(--text);
+    font: inherit; font-size: 16px; padding: 12px 14px; }
+  .search input::placeholder { color: #6c7086; }
+  .search .btn-go { width: 100%; margin-top: 4px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 12px;
+    padding: 11px 18px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none;
+    color: var(--crust); background: linear-gradient(135deg, var(--blue), var(--mauve));
+    box-shadow: 0 8px 20px rgba(137,180,250,.18); transition: transform .15s, filter .15s; }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  .btn.ghost { background: var(--s0); color: var(--text); box-shadow: none; border: 1px solid var(--s1); }
+  .btn.ghost:hover { background: var(--s1); }
+  .btn.sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+  .hint { margin-top: 14px; font-size: 13px; color: #6c7086; text-align: center; }
+  kbd { font-family: inherit; font-size: 12px; padding: 1px 6px; border-radius: 6px; background: var(--s0);
+    border: 1px solid var(--s1); color: var(--sub); }
+
+  section { margin-top: 40px; animation: up .6s ease both; }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+  .sec-title { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; margin: 0; }
+  .count { font-size: 12px; font-weight: 600; color: var(--sub); background: var(--s0); padding: 2px 9px; border-radius: 999px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .site { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px; min-width: 0;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 16px; cursor: pointer;
+    transition: transform .18s, border-color .18s, box-shadow .18s, background .18s; animation: up .4s ease both; }
+  .site:hover { transform: translateY(-3px); border-color: rgba(137,180,250,.35); box-shadow: 0 16px 36px rgba(0,0,0,.35);
+    background: rgba(49,50,68,.7); }
+  .avatar { flex: none; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+    font-weight: 800; font-size: 17px; color: var(--crust); }
+  .meta { min-width: 0; flex: 1; }
+  .site-title { font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .site-host { font-size: 12.5px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+  .del { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 8px; border: 0;
+    background: transparent; color: var(--sub); font-size: 16px; line-height: 1; cursor: pointer;
+    opacity: 0; transition: opacity .15s, background .15s, color .15s; }
+  .site:hover .del, .del:focus-visible { opacity: 1; }
+  .del:hover { background: rgba(243,139,168,.15); color: var(--red); }
+  .empty { grid-column: 1 / -1; text-align: center; padding: 30px 20px; color: var(--sub); border: 1px dashed var(--s1);
+    border-radius: 16px; font-size: 14px; }
+  .empty strong { display: block; color: var(--text); margin-bottom: 6px; font-size: 15px; }
+
+  dialog { border: 1px solid var(--s1); border-radius: 20px; padding: 0; width: min(440px, calc(100vw - 32px));
+    background: var(--base); color: var(--text); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  dialog::backdrop { background: rgba(10,10,18,.6); backdrop-filter: blur(4px); }
+  dialog form { padding: 24px; display: flex; flex-direction: column; gap: 14px; margin: 0; }
+  dialog h2 { margin: 0; font-size: 18px; }
+  dialog p { margin: 0; color: var(--sub); font-size: 13.5px; line-height: 1.5; }
+  label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--sub); font-weight: 500; }
+  input.field { background: var(--crust); border: 1px solid var(--s1); border-radius: 12px; padding: 11px 13px;
+    color: var(--text); font: inherit; font-size: 14.5px; outline: none; transition: border-color .15s, box-shadow .15s; }
+  input.field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(137,180,250,.18); }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+  .err { color: var(--red); font-size: 13px; min-height: 1em; }
+
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: var(--s0);
+    border: 1px solid var(--s1); color: var(--text); padding: 11px 18px; border-radius: 12px; font-size: 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @keyframes up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  @media (min-width: 620px) {
+    .search { display: flex; gap: 10px; align-items: center; }
+    .search input { flex: 1; }
+    .search .btn-go { width: auto; margin-top: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" id="brand" href="/" title="Kembali ke AI"><span class="logo">W</span><span>Web Proxy</span></a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="nav-link" id="proxyBack" type="button" hidden style="border:0;background:none;font:inherit;cursor:pointer">← Kembali</button>
+      <a class="nav-link" href="/proxy/logout">Keluar</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>Jelajah tanpa batas</h1>
+    <p>Buka situs apa pun lewat proxy pribadi. Simpan situs favoritmu agar bisa dibuka lagi dengan satu klik.</p>
+    <form class="search" id="searchForm" action="/proxy" method="GET" autocomplete="off">
+      <input id="q" name="url" type="text" placeholder="Ketik alamat, contoh: reddit.com" required spellcheck="false" autocapitalize="off">
+      <button class="btn btn-go" type="submit">Jelajahi</button>
+    </form>
+    <div class="hint">Tekan <kbd>/</kbd> untuk fokus ke kolom pencarian</div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2 class="sec-title">Situs tersimpan <span class="count" id="count">0</span></h2>
+      <button class="btn sm ghost" id="addBtn" type="button">+ Tambah situs</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <form id="addForm" method="dialog">
+    <h2>Simpan situs baru</h2>
+    <p>Situs akan muncul di daftar tersimpan dan bisa dibuka lewat proxy.</p>
+    <label>Nama
+      <input class="field" id="addTitle" type="text" maxlength="120" placeholder="Contoh: Reddit">
+    </label>
+    <label>Alamat
+      <input class="field" id="addUrl" type="text" required placeholder="https://reddit.com" spellcheck="false" autocapitalize="off">
+    </label>
+    <div class="err" id="addErr"></div>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="cancelAdd">Batal</button>
+      <button class="btn" type="submit">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var PALETTE = ['#89b4fa', '#cba6f7', '#a6e3a1', '#fab387', '#f38ba8', '#94e2d5', '#f9e2af', '#f5c2e7'];
+  var state = { items: [] };
+  var inFrame = window.parent && window.parent !== window;
+  var $ = function (s) { return document.querySelector(s); };
+
+  function colorFor(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return PALETTE[h % PALETTE.length]; }
+  function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t);
+    toast.t = setTimeout(function () { t.classList.remove('show'); }, 2000); }
+  function normalize(u) { u = (u || '').trim(); if (!u) return ''; return /^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : 'https://' + u; }
+  function goLogin() { location.href = '/proxy/login'; }
+
+  // Di dalam layer AI, logo menutup layer; di halaman penuh, logo kembali ke AI.
+  $('#brand').addEventListener('click', function (e) {
+    if (inFrame) { e.preventDefault(); window.parent.postMessage({ type: 'proxy:close' }, location.origin); }
+  });
+
+  var backBtn = document.getElementById('proxyBack');
+  if (inFrame && backBtn) {
+    backBtn.hidden = false;
+    backBtn.addEventListener('click', function () {
+      window.parent.postMessage({ type: 'proxy:close' }, location.origin);
+    });
+  }
+
+  function render() {
+    var grid = $('#grid');
+    grid.innerHTML = '';
+    $('#count').textContent = state.items.length;
+    if (!state.items.length) {
+      var empty = el('div', 'empty');
+      empty.appendChild(el('strong', '', 'Belum ada situs tersimpan'));
+      empty.appendChild(document.createTextNode('Tambahkan situs dengan tombol + Tambah situs.'));
+      grid.appendChild(empty);
+      return;
+    }
+    state.items.forEach(function (b) {
+      var host = hostOf(b.url);
+      var card = el('div', 'site');
+      card.title = b.url;
+      card.addEventListener('click', function () { location.href = '/proxy?url=' + encodeURIComponent(b.url); });
+      var av = el('div', 'avatar', (b.title || host).charAt(0).toUpperCase());
+      av.style.background = colorFor(host);
+      var meta = el('div', 'meta');
+      meta.appendChild(el('div', 'site-title', b.title || host));
+      meta.appendChild(el('div', 'site-host', host));
+      var del = el('button', 'del', '×');
+      del.type = 'button';
+      del.title = 'Hapus';
+      del.setAttribute('aria-label', 'Hapus ' + (b.title || host));
+      del.addEventListener('click', function (e) { e.stopPropagation(); remove(b.id); });
+      card.appendChild(av); card.appendChild(meta); card.appendChild(del);
+      grid.appendChild(card);
+    });
+  }
+
+  async function load() {
+    try {
+      var res = await fetch('/api/proxy/bookmarks', { credentials: 'same-origin' });
+      if (res.status === 401) return goLogin();
+      state.items = await res.json();
+      render();
+    } catch (e) { toast('Gagal memuat daftar situs'); }
+  }
+
+  async function remove(id) {
+    try {
+      var res = await fetch('/api/proxy/bookmarks/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' });
+      if (res.status === 401) return goLogin();
+      if (!res.ok) throw new Error();
+      state.items = state.items.filter(function (b) { return b.id !== id; });
+      render();
+      toast('Situs dihapus');
+    } catch (e) { toast('Gagal menghapus situs'); }
+  }
+
+  // Dialog tambah situs
+  var dlg = $('#dlg');
+  $('#addBtn').addEventListener('click', function () {
+    $('#addErr').textContent = '';
+    $('#addTitle').value = ''; $('#addUrl').value = '';
+    dlg.showModal();
+    setTimeout(function () { $('#addUrl').focus(); }, 30);
+  });
+  $('#cancelAdd').addEventListener('click', function () { dlg.close(); });
+  $('#addForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var url = normalize($('#addUrl').value);
+    var title = $('#addTitle').value.trim();
+    var err = $('#addErr');
+    err.textContent = '';
+    try {
+      var res = await fetch('/api/proxy/bookmarks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ url: url, title: title })
+      });
+      if (res.status === 401) return goLogin();
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
+      dlg.close();
+      toast(res.status === 201 ? 'Situs tersimpan' : 'Situs sudah ada di daftar');
+      load();
+    } catch (ex) { err.textContent = ex.message; }
+  });
+
+  // Pintasan keyboard
+  document.addEventListener('keydown', function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA';
+    if (e.key === '/' && !typing && !dlg.open) { e.preventDefault(); $('#q').focus(); }
+    else if (e.key === 'Escape' && document.activeElement) { document.activeElement.blur(); }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

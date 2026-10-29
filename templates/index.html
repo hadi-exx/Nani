@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dieskybxyz Dashbord</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dashbord">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <!-- Main Container -->
+    <div id="dashPanel" class="main-container">
+        <div class="header">
+            <div class="badge">✦ Hub Control</div>
+            <button id="installBtn" class="install-btn" type="button" hidden>⬇ Pasang aplikasi</button>
+            <h1 id="dashTitle" class="dash-title" role="button" tabindex="0" aria-expanded="false" title="Tampilkan / sembunyikan menu">Dieskybxyz Dashbord</h1>
+            <p>Akses cepat ke semua platform favorit kamu dalam satu tempat.</p>
+        </div>
+
+        <!-- Collapsible Menu (Grid 2 Baris) -->
+        <div id="menuContent" class="menu-wrapper is-hidden">
+            <div class="grid-container">
+                <!-- 1. Musik -->
+                <a href="#" id="musicCard" class="nav-card">
+                    <div class="icon-box music">
+                        <i data-lucide="music"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Musik</h3>
+                        <span>Streaming Lagu</span>
+                    </div>
+                </a>
+
+                <!-- 2. Nonton Anime -->
+                <a href="#" id="animeCard" class="nav-card">
+                    <div class="icon-box anime">
+                        <i data-lucide="tv"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Nonton Anime</h3>
+                        <span>Streaming Anime</span>
+                    </div>
+                </a>
+
+                <!-- 3. Proxy -->
+                <a href="#" id="proxyCard" class="nav-card">
+                    <div class="icon-box proxy">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Proxy</h3>
+                        <span>Koneksi Aman</span>
+                    </div>
+                </a>
+
+                <!-- 4. Folder Cloud -->
+                <a href="/cloud/" id="cloudCard" class="nav-card full-width">
+                    <div class="icon-box cloud">
+                        <i data-lucide="cloud"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Folder Cloud</h3>
+                        <span>Penyimpanan Data</span>
+                    </div>
+                </a>
+
+                <!-- 5. Universal Downloader -->
+                <a href="#" id="downloaderCard" class="nav-card full-width">
+                    <div class="icon-box downloader">
+                        <i data-lucide="download-cloud"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>Universal Downloader</h3>
+                        <span>Video & Foto dari Sosmed</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layer Musik, Anime, Proxy: iframe dimuat sekali, cukup disembunyikan saat ditutup -->
+    <div id="musicFrame" class="ai-frame hidden">
+        <iframe id="musicIframe" title="Musik" data-src="/music?embed=1" allow="autoplay"></iframe>
+    </div>
+    <div id="animeFrame" class="ai-frame hidden">
+        <iframe id="animeIframe" title="Anime" data-src="/anime?embed=1" allow="autoplay; fullscreen"></iframe>
+    </div>
+    <div id="proxyFrame" class="ai-frame hidden">
+        <iframe id="proxyIframe" title="Proxy" data-src="/proxy" allow="fullscreen"></iframe>
+    </div>
+    <div id="cloudFrame" class="ai-frame hidden">
+        <iframe id="cloudIframe" title="Folder Cloud" data-src="/cloud/" allow="fullscreen"></iframe>
+    </div>
+    <div id="downloaderFrame" class="ai-frame hidden">
+        <iframe id="downloaderIframe" title="Universal Downloader" data-src="/downloader/?embed=1" allow="fullscreen"></iframe>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
