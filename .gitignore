@@ -10,3 +10,6 @@ cache/
 
 # Rahasia runtime
 data/cloud/rc.secret
+
+# Data runtime antar muka (disalin dijalankan, bukan repo)
+data/
