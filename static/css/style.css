@@ -1,11 +1,11 @@
 :root {
-    --bg: #0b0f19;
-    --card-bg: rgba(23, 31, 51, 0.65);
-    --card-hover: rgba(35, 47, 76, 0.85);
-    --primary: #6366f1;
-    --text: #f3f4f6;
-    --text-muted: #9ca3af;
-    --border: rgba(255, 255, 255, 0.1);
+    --bg: #000000;
+    --card-bg: rgba(10, 10, 10, 0.85);
+    --card-hover: rgba(255, 255, 255, 0.08);
+    --primary: #ffffff;
+    --text: #fafafa;
+    --text-muted: #a3a3a3;
+    --border: rgba(255, 255, 255, 0.22);
 }
 
 * {
@@ -33,7 +33,7 @@ body {
     padding: 20px;
 }
 
-/* Background Glow Effects */
+/* ================= Background ================= */
 .background-glow {
     position: fixed;
     width: 350px;
@@ -44,57 +44,87 @@ body {
     pointer-events: none;
 }
 .glow-1 {
-    background: rgba(99, 102, 241, 0.25);
+    background: rgba(255, 255, 255, 0.10);
     top: 20%;
     left: 30%;
 }
 .glow-2 {
-    background: rgba(236, 72, 153, 0.2);
+    background: rgba(255, 255, 255, 0.06);
     bottom: 20%;
     right: 30%;
 }
 
-/* Gear / Settings Toggle Button */
-.gear-btn {
+/* ================= Bintang jatuh ================= */
+.star-overlay {
     position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    color: var(--text);
-    width: 48px;
-    height: 48px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
     border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 0 6px #fff, 0 0 3px rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: fall linear infinite;
 }
 
-.gear-btn:hover {
-    background: var(--primary);
-    transform: rotate(90deg) scale(1.05);
+@keyframes fall {
+    0%   { opacity: 0; transform: translate(0, 0); }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(60px, 100vh); }
 }
 
-/* Main Container */
+/* Bintang emas meledak saat dashboard diklik */
+.star.burst-star {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+    opacity: 1;
+    pointer-events: none;
+    z-index: 10;
+    animation: burst 0.9s ease-out forwards;
+}
+
+@keyframes burst {
+    0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx, 30px), var(--ty, -40px)) scale(0.3); }
+}
+
+/* ================= Main Container ================= */
 .main-container {
     position: relative;
     z-index: 1;
     background: var(--card-bg);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
+    /* Garis putih mengelilingi kotak dashboard (bukan isi kotaknya). */
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    outline: 1px solid rgba(255, 255, 255, 0.12);
+    outline-offset: 6px;
     padding: 36px 28px;
     border-radius: 28px;
     max-width: 520px;
     width: 100%;
     margin: 0 auto;
     cursor: pointer;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-    transition: all 0.4s ease;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.65);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+.main-container.is-hidden {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .header {
@@ -107,9 +137,9 @@ body {
     padding: 6px 14px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #a5b4fc;
-    background: rgba(99, 102, 241, 0.15);
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #fafafa;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.30);
     border-radius: 99px;
     margin-bottom: 12px;
 }
@@ -118,7 +148,7 @@ h1 {
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 8px;
-    background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -128,13 +158,13 @@ p {
     font-size: 0.88rem;
 }
 
-/* Menu Content & Grid Layout */
+/* ================= Menu & Grid ================= */
 .menu-wrapper {
     max-height: 800px;
     opacity: 1;
     overflow: hidden;
-    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                opacity 0.4s ease, 
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.4s ease,
                 margin-top 0.4s ease;
     margin-top: 24px;
 }
@@ -152,15 +182,15 @@ p {
     gap: 14px;
 }
 
-/* Navigation Cards */
+/* ================= Navigation Cards ================= */
 .nav-card {
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 16px;
     text-decoration: none;
     color: var(--text);
@@ -169,15 +199,18 @@ p {
 
 .nav-card:hover {
     background: var(--card-hover);
-    border-color: rgba(99, 102, 241, 0.4);
+    border-color: #ffffff;
     transform: translateY(-3px);
+}
+.nav-card:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
 }
 
 .nav-card.full-width {
     grid-column: span 2;
 }
 
-/* Icon Box Styles & Gradient Colors */
 .icon-box {
     width: 42px;
     height: 42px;
@@ -185,16 +218,20 @@ p {
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: #ffffff;
     flex-shrink: 0;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.icon-box.music { background: linear-gradient(135deg, #12c2e9, #c471ed, #f64f59); }
-.icon-box.anime { background: linear-gradient(135deg, #ff007f, #7928ca); }
-.icon-box.proxy { background: linear-gradient(135deg, #00b09b, #96c93d); }
-.icon-box.ai    { background: linear-gradient(135deg, #8a2387, #e94057, #f27121); }
-.icon-box.cloud { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
-.icon-box.downloader { background: linear-gradient(135deg, #f7971e, #ffd200); }
+/* Ikon tetap monokrom: kotak berbalik jadi putih saat kartu disentuh. */
+.nav-card:hover .icon-box,
+.nav-card:focus-visible .icon-box {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+}
 
 .card-info {
     display: flex;
@@ -221,18 +258,7 @@ p {
     }
 }
 
-/* Panel dashboard: tampil/sembunyi lewat tombol gear */
-.main-container {
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-}
-.main-container.is-hidden {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Frame TermuxAI (layar penuh) */
+/* ================= Fullscreen Frame ================= */
 .ai-frame {
     position: fixed;
     inset: 0;
@@ -247,7 +273,7 @@ p {
     display: block;
 }
 
-/* Judul sebagai tombol buka/tutup menu */
+/* ================= Judul ================= */
 .dash-title {
     cursor: pointer;
     user-select: none;
@@ -258,14 +284,14 @@ p {
     border-radius: 8px;
 }
 
-/* Tombol pasang PWA (hanya muncul jika browser mengizinkan) */
+/* ================= Tombol PWA ================= */
 .install-btn {
     margin-top: 10px;
     padding: 8px 14px;
     border: 0;
     border-radius: 999px;
-    background: #60a5fa;
-    color: #0f172a;
+    background: #ffffff;
+    color: #000000;
     font-family: inherit;
     font-size: 14px;
     font-weight: 600;

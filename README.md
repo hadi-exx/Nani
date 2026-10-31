@@ -71,6 +71,15 @@ Tekan judul **Dieskybxyz Dashbord** untuk membuka atau menutup menu.
 
 **Tombol kembali HP:** saat Musik, Anime, Proxy, Cloud, atau Downloader terbuka, tombol kembali akan menutup layer itu dan tetap di dasbor. Di dasbor, tekan kembali sekali untuk melihat pemberitahuan, lalu tekan sekali lagi dalam 2 detik untuk keluar.
 
+## Cookies (opsional, untuk konten private)
+
+Downloader dan Musik memakai cookie kalau ada file `cookies.txt` (format Netscape). Dicari berurutan: `$YT_COOKIES`, `~/cookies.txt`, lalu `cookies.txt` di folder proyek.
+
+- Tanpa cookie: video publik tetap bisa diunduh dan di-preview.
+- Dengan cookie: konten private / login / age-restricted ikut jalan, termasuk preview-nya (cookie diteruskan oleh proxy `/downloader/stream_remote`).
+
+Preview memakai format muxed (video+audio). Untuk YouTube, kalau format muxed tidak tersedia, server meminta ulang format progresif 360p khusus preview — jadi preview bisa tampil walau kualitas download tetap yang terbaik.
+
 ## Pasang sebagai aplikasi (PWA)
 
 - **Android (Chrome):** buka `http://localhost:5000`, lalu pilih menu ⋮ → **Install app** atau **Tambahkan ke layar utama**. Di Chrome juga muncul tombol **⬇ Pasang aplikasi**.

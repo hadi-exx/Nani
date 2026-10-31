@@ -6,7 +6,7 @@
     <title>Dieskybxyz Dashbord</title>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#000000">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,8 +19,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <!-- Background glow + bintang jatuh -->
     <div class="background-glow glow-1"></div>
     <div class="background-glow glow-2"></div>
+    <div class="star-overlay" id="starOverlay"></div>
 
     <!-- Main Container -->
     <div id="dashPanel" class="main-container">
@@ -68,7 +70,7 @@
                 </a>
 
                 <!-- 4. Folder Cloud -->
-                <a href="/cloud/" id="cloudCard" class="nav-card full-width">
+                <a href="#" id="cloudCard" class="nav-card full-width">
                     <div class="icon-box cloud">
                         <i data-lucide="cloud"></i>
                     </div>
@@ -85,7 +87,7 @@
                     </div>
                     <div class="card-info">
                         <h3>Universal Downloader</h3>
-                        <span>Video & Foto dari Sosmed</span>
+                        <span>Video &amp; Foto dari Sosmed</span>
                     </div>
                 </a>
             </div>

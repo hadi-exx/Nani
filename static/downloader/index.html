@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        #embed-back { position: fixed; top: 10px; left: 10px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; background: rgba(11,15,25,.85); color: #f3f4f6; font-size: 1rem; line-height: 1; cursor: pointer; }
+        #embed-back { position: fixed; top: 10px; left: 10px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; background: rgba(0,0,0,.88); color: #fafafa; font-size: 1rem; line-height: 1; cursor: pointer; }
         #embed-back[hidden] { display: none; }
         body.embed { padding-top: 56px !important; }
     </style>
@@ -31,48 +31,101 @@
         <div class="header">
             <div class="badge">✦ All-in-One Downloader</div>
             <h1>Universal Downloader</h1>
-            <p>Download video & foto dari TikTok, IG, YouTube, Pinterest, dan lainnya.</p>
+            <p>Download video &amp; foto dari TikTok, IG, YouTube, Pinterest, dan lainnya.</p>
         </div>
 
-        <div class="input-box">
-            <div class="field-group">
-                <i data-lucide="link" class="input-icon"></i>
-                <input type="url" id="mediaUrl" placeholder="Tempel URL (TikTok, IG, YT, Pinterest...)" autocomplete="off">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="download">Download</button>
+            <button class="tab" data-tab="queue">Queue <span id="queueCount" class="tab-badge">0</span></button>
+            <button class="tab" data-tab="history">History</button>
+        </div>
+
+        <!-- ============ TAB: DOWNLOAD ============ -->
+        <section id="tab-download" class="tab-panel">
+            <div class="input-box">
+                <div class="field-group">
+                    <i data-lucide="link" class="input-icon"></i>
+                    <input type="url" id="mediaUrl" placeholder="Tempel URL (TikTok, IG, YT, Pinterest...)" autocomplete="off">
+                </div>
+                <button id="btnFetch" class="btn primary">
+                    <i data-lucide="download-cloud"></i> Process
+                </button>
             </div>
-            <button id="btnFetch" class="btn primary">
-                <i data-lucide="download-cloud"></i> Process
-            </button>
-        </div>
 
-        <div id="loading" class="loading-state hidden">
-            <div class="spinner"></div>
-            <p>Memproses media...</p>
-        </div>
-
-        <div id="resultCard" class="result-card hidden">
-            <div class="preview-box">
-                <!-- Thumbnail Cover (Mode Video) -->
-                <img id="resThumb" src="" alt="Thumbnail" class="thumb-img">
-
-                <!-- Slider Foto (Mode Slide TikTok/IG) -->
-                <div id="imageSlider" class="slider-container hidden">
-                    <img id="currentImage" src="" alt="Slide Preview" class="thumb-img">
-                    <div class="slider-controls">
-                        <button id="prevImg" class="slide-btn"><i data-lucide="chevron-left"></i></button>
-                        <span id="imgCounter" class="counter-badge">1 / 1</span>
-                        <button id="nextImg" class="slide-btn"><i data-lucide="chevron-right"></i></button>
+            <!-- Opsi format -->
+            <div class="options-row">
+                <div class="option-group">
+                    <label>Format</label>
+                    <div class="segmented" id="formatSeg">
+                        <button type="button" class="seg active" data-format="video">Video MP4</button>
+                        <button type="button" class="seg" data-format="audio">Audio MP3</button>
                     </div>
+                </div>
+                <div class="option-group" id="qualityGroup">
+                    <label>Kualitas</label>
+                    <select id="qualitySelect">
+                        <option value="best">Terbaik</option>
+                        <option value="1080">1080p</option>
+                        <option value="720">720p</option>
+                        <option value="480">480p</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="res-info">
-                <span id="resPlatform" class="platform-badge">Platform</span>
-                <h3 id="resTitle">Judul Media</h3>
-                <p id="resUploader" class="uploader-text">Uploader</p>
-                
-                <div id="downloadButtons" class="download-container"></div>
+            <div id="statusMsg" class="status-msg hidden" role="status"></div>
+
+            <div id="loading" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p>Memproses media...</p>
             </div>
-        </div>
+
+            <div id="resultCard" class="result-card hidden">
+                <div class="preview-box">
+                    <img id="resThumb" src="" alt="Thumbnail" class="thumb-img">
+                    <video id="resPlayer" class="thumb-img hidden" controls playsinline preload="metadata"></video>
+
+                    <div id="imageSlider" class="slider-container hidden">
+                        <img id="currentImage" src="" alt="Slide Preview" class="thumb-img">
+                        <div class="slider-controls">
+                            <button id="prevImg" class="slide-btn"><i data-lucide="chevron-left"></i></button>
+                            <span id="imgCounter" class="counter-badge">1 / 1</span>
+                            <button id="nextImg" class="slide-btn"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="res-info">
+                    <span id="resPlatform" class="platform-badge">Platform</span>
+                    <h3 id="resTitle">Judul Media</h3>
+                    <p id="resUploader" class="uploader-text">Uploader</p>
+
+                    <div id="downloadButtons" class="download-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ TAB: QUEUE ============ -->
+        <section id="tab-queue" class="tab-panel hidden">
+            <div class="panel-head">
+                <h2>Download Queue</h2>
+                <button id="btnClearQueue" class="btn ghost small">Bersihkan selesai</button>
+            </div>
+            <div id="queueList" class="list"></div>
+            <div id="queueEmpty" class="empty-state">Queue kosong. Tambahkan URL untuk mulai download.</div>
+        </section>
+
+        <!-- ============ TAB: HISTORY ============ -->
+        <section id="tab-history" class="tab-panel hidden">
+            <div class="panel-head">
+                <h2>Download History</h2>
+                <button id="btnClearHistory" class="btn danger small">
+                    <i data-lucide="trash-2"></i> Clear All
+                </button>
+            </div>
+            <div id="historyList" class="list"></div>
+            <div id="historyEmpty" class="empty-state">Belum ada riwayat unduhan.</div>
+        </section>
     </div>
 
     <script src="/static/downloader/script.js"></script>

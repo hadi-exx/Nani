@@ -3,29 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DIESKYBYZ</title>
+<title>DIESKYBXYZ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-  :root { --bg:#0b0f19; --card:rgba(23,31,51,.7); --card-hover:rgba(35,47,76,.85); --primary:#6366f1; --pink:#ec4899; --text:#f3f4f6; --muted:#9ca3af; --border:rgba(255,255,255,.1); }
+  :root { --bg:#000000; --card:rgba(255,255,255,.05); --card-hover:rgba(255,255,255,.10); --primary:#ffffff; --pink:#d4d4d4; --text:#fafafa; --muted:#a3a3a3; --border:rgba(255,255,255,.22); }
   * { box-sizing: border-box; }
-  body { margin:0; background: radial-gradient(circle at 25% 15%, rgba(99,102,241,.22), transparent 42%), radial-gradient(circle at 80% 85%, rgba(236,72,153,.16), transparent 40%), var(--bg); background-attachment: fixed; color:var(--text); font-family:'Plus Jakarta Sans', system-ui, sans-serif; }
-  header { position:sticky; top:0; z-index:5; background:rgba(11,15,25,.85); backdrop-filter: blur(12px); border-bottom:1px solid var(--border);
-           padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-  header a.logo { color:var(--text); font-weight:700; text-decoration:none; font-size:18px; }
+  body { margin:0; padding:15px; padding-bottom:0; background: radial-gradient(circle at 25% 15%, rgba(255,255,255,.10), transparent 42%), radial-gradient(circle at 80% 85%, rgba(255,255,255,.06), transparent 40%), var(--bg); background-attachment: fixed; color:var(--text); font-family:'Plus Jakarta Sans', system-ui, sans-serif; }
+  html, body { max-width:100%; overflow-x:hidden; }
+  /* Topbar mengikuti halaman Musik: tombol kembali + judul DIESKYBXYZ */
+  .topbar { display:flex; align-items:stretch; gap:10px; margin:10px 0 15px 0; }
+  .topbar h1 { flex:1; margin:0; color:var(--text); text-align:center; font-size:22px; font-weight:700; letter-spacing:1px;
+               background:var(--card); padding:12px; border:1px solid var(--border); border-radius:16px; backdrop-filter:blur(12px);
+               display:flex; align-items:center; justify-content:center; }
+  .back-btn { display:flex; align-items:center; justify-content:center; width:56px; flex:0 0 56px; padding:0;
+              background:var(--card); color:var(--text); text-decoration:none; border:1px solid var(--border); border-radius:16px; font-size:18px; }
+  .back-btn:hover { background:var(--card-hover); }
+  .back-btn:active { transform:scale(.96); }
+  .search-box { display:flex; gap:8px; margin-bottom:15px; }
   form.search { flex:1 1 0; display:flex; gap:8px; min-width:0; }
   form.search input { flex:1; min-width:0; width:100%; }
-  header { min-width:0; }
-  html, body { max-width:100%; overflow-x:hidden; }
-  input[type=search] { flex:1; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:15px; outline:none; }
+  input[type=search] { flex:1; padding:12px 15px; min-height:44px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); outline:none; font-weight:600; font-size:14px; }
+  input[type=search]::placeholder { color:var(--muted); }
   input[type=search]:focus { border-color:var(--primary); }
-  main { padding:16px; max-width:1200px; margin:0 auto; }
+  main { padding:0 0 24px 0; max-width:1200px; margin:0 auto; }
   h1 { font-size:22px; margin:8px 0; font-weight:700; }
   h2 { font-size:17px; margin:20px 0 10px; color:var(--text); font-weight:600; }
   a { color:inherit; }
-  button, .btn { background:var(--primary); color:#fff; border:0; padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; font-size:14px; transition:.15s; }
+  button, .btn { background:var(--primary); color:#000; border:0; padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; font-size:14px; transition:.15s; }
   button:hover, .btn:hover { filter:brightness(1.1); }
   button.ghost, .btn.ghost { background:var(--card); color:var(--text); border:1px solid var(--border); }
-  button.on { background:var(--primary); color:#fff; }
+  button.on { background:var(--primary); color:#000; }
   button:disabled { opacity:.4; cursor:default; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:14px; }
   .card { text-decoration:none; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--border); transition:transform .15s, background .15s; }
@@ -47,7 +54,7 @@
   .ctrl { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
   select { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px; }
   .msg { color:var(--muted); padding:20px 0; }
-  .err { color:#f87171; margin-top:12px; }
+  .err { color:#e5e5e5; margin-top:12px; }
   @media (max-width:600px) { .poster.big { width:120px; min-width:120px; } }
   .grid > * { opacity:0; translate:0 12px; transition:opacity .35s ease, translate .35s ease, transform .15s; }
   .grid > *.in { opacity:1; translate:0 0; }
@@ -57,18 +64,24 @@
   .poster img.ok { opacity:1; }
   .ep.seen { opacity:.5; }
   .hc { position:relative; }
-  .hc .x { position:absolute; top:6px; right:6px; padding:4px 8px; font-size:12px; background:rgba(11,15,25,.85); color:var(--text); }
+  .hc .x { position:absolute; top:6px; right:6px; padding:4px 8px; font-size:12px; background:rgba(0,0,0,.9); color:var(--text); }
   .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 </style>
 </head>
 <body>
-<header>
-  <a class="logo" href="#/">DIESKYBYZ</a>
+<div class="topbar">
+  <a class="back-btn" href="/" aria-label="Kembali ke dashboard"><i>&#8592;</i></a>
+  <h1>DIESKYBXYZ</h1>
+</div>
+
+<div class="search-box">
   <form class="search" id="sf">
     <input type="search" id="q" placeholder="Cari anime..." autocomplete="off">
-    <button type="submit">Cari</button>
+    <button type="submit" aria-label="Cari" style="padding:0 18px; display:flex; align-items:center; justify-content:center;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    </button>
   </form>
-</header>
+</div>
 <main id="app"><p class="msg">Memuat...</p></main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
@@ -101,7 +114,8 @@ function posterHtml(title, big, id) {
   const h = hueOf(title);
   const cls = big ? "poster big" : "poster";
   const img = id ? `<img loading="lazy" alt="" src="/anime/poster?id=${enc(id)}&t=${enc(title)}" onload="this.classList.add('ok')" onerror="this.remove()">` : "";
-  return `<div class="${cls}" style="background:linear-gradient(160deg,hsl(${h},55%,38%),hsl(${(h+40)%360},50%,18%))">${esc((title || "?").charAt(0).toUpperCase())}${img}</div>`;
+  const g1 = 22 + (h % 22), g2 = 8 + (h % 12);   // variasi abu-abu, tanpa warna
+  return `<div class="${cls}" style="background:linear-gradient(160deg,hsl(0,0%,${g1}%),hsl(0,0%,${g2}%))">${esc((title || "?").charAt(0).toUpperCase())}${img}</div>`;
 }
 
 function card(id, title, sub) {
@@ -322,10 +336,10 @@ route();
   document.body.style.paddingTop = "44px";
   const bar = document.createElement("div");
   Object.assign(bar.style, { position: "fixed", top: "0", left: "0", right: "0", height: "44px",
-    display: "flex", alignItems: "center", padding: "0 10px", background: "#0b0f19", zIndex: "1000" });
+    display: "flex", alignItems: "center", padding: "0 10px", background: "#000000", zIndex: "1000" });
   bar.innerHTML = '<button id="embed-back" type="button" aria-label="Kembali ke AI">←</button>';
   const btn = bar.querySelector("button");
-  Object.assign(btn.style, { background: "#6366f1", color: "#fff", border: "0",
+  Object.assign(btn.style, { background: "#ffffff", color: "#000000", border: "0",
     width: "36px", height: "32px", padding: "0", font: "inherit", fontSize: "18px", fontWeight: "700",
     lineHeight: "1", cursor: "pointer" });
   document.body.prepend(bar);

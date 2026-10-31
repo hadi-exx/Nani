@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ---------- Bintang jatuh (background) ----------
+    const starOverlay = document.getElementById('starOverlay');
+    if (starOverlay) {
+        const STAR_COUNT = 30;
+        for (let i = 0; i < STAR_COUNT; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 1; // 1-3px
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.top = (Math.random() * 60) + '%';
+            star.style.left = (Math.random() * 100) + '%';
+            star.style.animationDelay = (Math.random() * 4) + 's';
+            star.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            starOverlay.appendChild(star);
+        }
+    }
+
+    // ---------- Dashboard: buka/tutup menu ----------
     const title = document.getElementById('dashTitle');
     const menu = document.getElementById('menuContent');
     const panel = document.getElementById('dashPanel');
@@ -11,10 +30,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setMenu(false);
 
+    // Efek bintang emas meledak di posisi klik
+    const starBurst = (clientX, clientY) => {
+        if (!starOverlay) return;
+        const rect = panel.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        for (let i = 0; i < 15; i++) {
+            const star = document.createElement('div');
+            star.className = 'star burst-star';
+            star.style.left = x + 'px';
+            star.style.top = y + 'px';
+            const size = Math.random() * 4 + 2;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.setProperty('--tx', (Math.random() * 80 - 40) + 'px');
+            star.style.setProperty('--ty', (Math.random() * 80 - 60) + 'px');
+            starOverlay.appendChild(star);
+            setTimeout(() => star.remove(), 1000);
+        }
+    };
+
     // Seluruh kartu (panel) bisa ditekan untuk buka / tutup menu.
     // Tekan kartu menu (nav-card) tetap menjalankan aksinya sendiri.
     panel.addEventListener('click', (e) => {
         if (e.target.closest('.nav-card')) return;
+        starBurst(e.clientX, e.clientY);
         setMenu(!isOpen());
     });
 
@@ -33,8 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Layer Musik, Anime, Proxy, Cloud, Downloader. Hanya satu layer yang tampil;
-    // layer lain tetap dimuat supaya musik / anime yang sedang berjalan tidak berhenti.
+    // ---------- Layer Musik, Anime, Proxy, Cloud, Downloader ----------
     const LAYERS = {
         music: { card: 'musicCard', frame: 'musicFrame', iframe: 'musicIframe' },
         anime: { card: 'animeCard', frame: 'animeFrame', iframe: 'animeIframe' },
@@ -55,9 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ---- Tombol kembali HP ----
-    // Setiap layer yang dibuka dicatat di riwayat browser, jadi tombol kembali
-    // menutup layer dulu dan tidak keluar dari dasbor.
-    // Di dasbor, tekan kembali 2x dalam 2 detik untuk keluar (ada pemberitahuan di tekan pertama).
     const EXIT_WINDOW = 2000;
     let lastBackAt = 0;
     let toastTimer = null;
@@ -66,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.textContent = 'Tekan sekali lagi untuk keluar';
     toast.setAttribute('role', 'status');
     toast.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);' +
-        'background:rgba(15,23,42,.92);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;' +
+        'background:rgba(0,0,0,.92);color:#fafafa;border:1px solid rgba(255,255,255,.25);padding:10px 18px;border-radius:999px;font-size:14px;' +
         'font-family:inherit;z-index:10000;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;';
     document.body.appendChild(toast);
 
@@ -80,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, EXIT_WINDOW);
     };
 
-    // Dasbor selalu punya satu "penjaga" di atasnya agar tekan kembali pertama tertangkap di sini.
     if (!(history.state && history.state.guard)) {
         history.replaceState({ root: true }, '');
         history.pushState({ guard: true }, '');
@@ -102,10 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
         openName = name;
     };
 
-    // Dipanggil dari tombol di dalam layer maupun dari halaman layer (postMessage).
     const closeLayer = (name) => {
         if (openName !== name) { hideLayer(name); return; }
-        if (history.state && history.state.layer) history.back(); // popstate yang menutup layer
+        if (history.state && history.state.layer) history.back();
         else hideAllLayers();
     };
 
@@ -126,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('popstate', (e) => {
-        // Tombol kembali HP ditekan
         if (openName) {
             hideAllLayers();
         } else if (isOpen()) {
@@ -134,13 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const now = Date.now();
             if (now - lastBackAt < EXIT_WINDOW) {
-                history.back(); // tekan kedua: keluar dari dasbor
+                history.back();
                 return;
             }
             lastBackAt = now;
             showToast();
         }
-        // Pastikan tekan kembali berikutnya tetap tertangkap dasbor
         if (!(e.state && e.state.guard)) history.pushState({ guard: true }, '');
     });
 });

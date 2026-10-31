@@ -1,7 +1,7 @@
 // Service worker Dieskybxyz Dashbord.
 // Hanya menyimpan aset statis dashboard agar cepat dan bisa dibuka saat offline.
 // Data API, streaming audio/video, dan halaman lain TIDAK pernah disimpan.
-const VERSION = "dashbord-v1";
+const VERSION = "dashbord-v2";
 const SHELL_CACHE = VERSION + "-shell";
 const SHELL = [
   "/",

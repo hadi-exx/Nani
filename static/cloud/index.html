@@ -7,8 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col md:flex-row antialiased selection:bg-blue-500 selection:text-white">
-  <a id="backDash" href="/" style="position:fixed;top:6px;right:6px;z-index:9999;font-size:12px;padding:4px 10px;padding:6px 12px;border-radius:999px;background:rgba(15,23,42,.85);color:#fff;font:600 12px system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(6px)">&larr; Back</a>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col md:flex-row antialiased selection:bg-white selection:text-black">
+  <a id="backDash" href="/" style="position:fixed;top:6px;right:6px;z-index:9999;font-size:12px;padding:4px 10px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.85);color:#fff;font:600 12px system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(6px)">&larr; Back</a>
 
   <!-- Toast -->
   <div id="toastContainer" class="fixed top-4 right-4 z-[80] flex flex-col gap-2 max-w-xs w-full pointer-events-none" aria-live="polite"></div>
@@ -112,7 +112,7 @@
       <div class="glass-panel rounded-2xl p-3 flex gap-2">
         <input id="newFolder" type="text" maxlength="255" placeholder="Nama folder baru..."
           class="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-200">
-        <button id="createFolderBtn" type="button" class="btn-primary whitespace-nowrap bg-emerald-600 hover:bg-emerald-500">+ Folder</button>
+        <button id="createFolderBtn" type="button" class="btn-primary whitespace-nowrap">+ Folder</button>
       </div>
 
       <div class="glass-panel rounded-2xl p-3 flex flex-col gap-2">
@@ -121,7 +121,7 @@
             class="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-800 file:text-slate-200">
           <input id="folderInput" type="file" webkitdirectory directory multiple class="hidden">
           <button id="uploadFolderBtn" type="button" class="btn-ghost whitespace-nowrap">📁 Folder</button>
-          <button id="uploadBtn" type="button" class="btn-primary whitespace-nowrap bg-purple-600 hover:bg-purple-500">📤 Upload</button>
+          <button id="uploadBtn" type="button" class="btn-primary whitespace-nowrap">📤 Upload</button>
         </div>
         <p id="fileHint" class="text-[10px] text-slate-500">Belum ada file dipilih · atau seret file ke halaman ini</p>
         <div id="uploadProgress" class="hidden">

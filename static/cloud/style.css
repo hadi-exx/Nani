@@ -1,13 +1,13 @@
 /* ---------- Dasar ---------- */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(10, 10, 10, 0.80);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background: linear-gradient(90deg, #171717 25%, #262626 50%, #171717 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
 }
@@ -22,7 +22,7 @@
 }
 
 :focus-visible {
-  outline: 2px solid #60a5fa;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -47,8 +47,8 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 9999px;
-  border: 3px solid rgba(96, 165, 250, 0.18);
-  border-top-color: #60a5fa;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: #ffffff;
   animation: spin 0.8s linear infinite;
 }
 
@@ -75,25 +75,26 @@
   transition: background-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
 }
 .btn-primary {
-  background: #2563eb;
-  color: #fff;
-  box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.6);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 6px 16px -6px rgba(255, 255, 255, 0.25);
 }
-.btn-primary:hover:not(:disabled) { background: #3b82f6; }
+.btn-primary:hover:not(:disabled) { background: #d4d4d4; }
 .btn-danger {
-  background: #dc2626;
-  color: #fff;
-  box-shadow: 0 6px 16px -6px rgba(220, 38, 38, 0.5);
+  background: rgba(255, 255, 255, 0.10);
+  color: #fafafa;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  box-shadow: none;
 }
-.btn-danger:hover:not(:disabled) { background: #ef4444; }
+.btn-danger:hover:not(:disabled) { background: rgba(255, 255, 255, 0.20); }
 .btn-ghost {
-  background: rgba(30, 41, 59, 0.9);
-  color: #cbd5e1;
-  border: 1px solid rgba(51, 65, 85, 0.8);
+  background: rgba(255, 255, 255, 0.05);
+  color: #d4d4d4;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(51, 65, 85, 0.9);
-  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fafafa;
 }
 .btn-primary:active:not(:disabled),
 .btn-danger:active:not(:disabled),
@@ -115,15 +116,15 @@ button:disabled,
   line-height: 1;
   transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
 }
-.icon-btn:hover:not(:disabled) { background: rgba(148, 163, 184, 0.14); }
+.icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
 .icon-btn:active:not(:disabled) { transform: scale(0.92); }
 .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.fav-on { color: #fbbf24; }
+.fav-on { color: #ffffff; }
 
 /* ---------- Kartu file ---------- */
 /* Kartu memakai latar solid (tanpa blur) agar scroll ringan */
 .item-card {
-  background-color: #0f172a;
+  background-color: #0a0a0a;
   content-visibility: auto;
   contain-intrinsic-size: auto 72px;
   transition: background-color 0.12s ease;
@@ -132,11 +133,11 @@ button:disabled,
   contain-intrinsic-size: auto 170px;
 }
 .item-card:hover {
-  background-color: #131e35;
+  background-color: #161616;
 }
 .item-card.is-selected {
-  border-color: rgba(59, 130, 246, 0.8) !important;
-  background-color: #14213f;
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  background-color: #1f1f1f;
 }
 
 /* Animasi hanya saat pindah folder */
@@ -156,7 +157,7 @@ button:disabled,
   border-radius: 0.75rem;
   cursor: pointer;
 }
-.open-area:hover .card-name { color: #60a5fa; }
+.open-area:hover .card-name { color: #ffffff; }
 
 .card-icon {
   font-size: 1.35rem;
@@ -166,14 +167,14 @@ button:disabled,
 .card-name {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #e5e5e5;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .card-meta {
   font-size: 10px;
-  color: #94a3b8;
+  color: #a3a3a3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -181,14 +182,14 @@ button:disabled,
 
 /* ---------- Progress penyimpanan ---------- */
 .quota-bar {
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  background: linear-gradient(90deg, #ffffff, #d4d4d4);
   transition: width 0.6s ease;
 }
 .quota-bar[data-level="warn"] {
-  background: linear-gradient(90deg, #f59e0b, #f97316);
+  background: linear-gradient(90deg, #ffffff, #a3a3a3);
 }
 .quota-bar[data-level="danger"] {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
+  background: linear-gradient(90deg, #a3a3a3, #737373);
 }
 
 /* ---------- Hormati pengaturan "kurangi animasi" ---------- */
@@ -208,11 +209,11 @@ button:disabled,
   padding: 0.55rem 0.7rem;
   border-radius: 0.75rem;
   font-size: 0.75rem;
-  color: #e2e8f0;
+  color: #e5e5e5;
   text-align: left;
   transition: background-color 0.12s ease;
 }
-.move-row:hover:not(:disabled) { background: rgba(51, 65, 85, 0.6); }
+.move-row:hover:not(:disabled) { background: rgba(255, 255, 255, 0.10); }
 .move-row:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ---------- Tempat sampah ---------- */
@@ -222,6 +223,68 @@ button:disabled,
   gap: 0.75rem;
   padding: 0.7rem 0.8rem;
   border-radius: 1rem;
-  border: 1px solid rgba(51, 65, 85, 0.8);
-  background-color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background-color: #0a0a0a;
 }
+
+/* ============================================================
+   TEMA HITAM PUTIH (monokrom)
+   Menimpa utilitas Tailwind yang berwarna (biru/indigo/merah/
+   kuning/hijau) dan palet slate yang masih kebiruan.
+   ============================================================ */
+
+/* --- Latar & teks netral --- */
+[class*="bg-slate-9"], [class*="bg-slate-950"] { background-color: #000000 !important; }
+[class*="bg-slate-8"] { background-color: #101010 !important; }
+[class*="bg-slate-7"] { background-color: #1a1a1a !important; }
+[class*="bg-slate-6"] { background-color: #262626 !important; }
+
+[class*="border-slate-7"], [class*="border-slate-8"] { border-color: rgba(255, 255, 255, 0.18) !important; }
+[class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255, 255, 255, 0.18) !important; }
+
+.text-slate-100, .text-slate-50 { color: #fafafa !important; }
+.text-slate-200 { color: #e5e5e5 !important; }
+.text-slate-300 { color: #d4d4d4 !important; }
+.text-slate-400 { color: #a3a3a3 !important; }
+.text-slate-500 { color: #8a8a8a !important; }
+.text-slate-600 { color: #737373 !important; }
+[class*="placeholder-slate-"]::placeholder { color: #737373 !important; }
+
+/* --- Semua aksen berwarna jadi putih/abu --- */
+[class*="text-blue-"], [class*="text-indigo-"], [class*="text-sky-"], [class*="text-cyan-"],
+[class*="text-violet-"], [class*="text-purple-"], [class*="text-fuchsia-"], [class*="text-pink-"],
+[class*="text-rose-"], [class*="text-red-"], [class*="text-orange-"], [class*="text-amber-"],
+[class*="text-yellow-"], [class*="text-lime-"], [class*="text-green-"], [class*="text-emerald-"],
+[class*="text-teal-"] { color: #e5e5e5 !important; }
+
+[class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"],
+[class*="bg-violet-"], [class*="bg-purple-"], [class*="bg-fuchsia-"], [class*="bg-pink-"],
+[class*="bg-rose-"], [class*="bg-red-"], [class*="bg-orange-"], [class*="bg-amber-"],
+[class*="bg-yellow-"], [class*="bg-lime-"], [class*="bg-green-"], [class*="bg-emerald-"],
+[class*="bg-teal-"] { background-color: rgba(255, 255, 255, 0.10) !important; }
+
+/* Tombol utama: putih solid, teks hitam. */
+[class*="bg-blue-600"], [class*="bg-indigo-600"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[class*="border-blue-"], [class*="border-indigo-"], [class*="border-red-"], [class*="border-emerald-"],
+[class*="border-amber-"], [class*="border-green-"] { border-color: rgba(255, 255, 255, 0.35) !important; }
+
+[class*="shadow-blue-"], [class*="shadow-indigo-"] { --tw-shadow-color: rgba(255, 255, 255, 0.15) !important; }
+
+/* Gradien (logo & judul) jadi putih -> abu. */
+[class*="from-blue-"], [class*="from-indigo-"], [class*="from-purple-"], [class*="from-violet-"],
+[class*="from-pink-"], [class*="from-emerald-"], [class*="from-green-"] {
+  --tw-gradient-from: #ffffff !important;
+  --tw-gradient-to: rgba(255, 255, 255, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[class*="to-indigo-"], [class*="to-blue-"], [class*="to-purple-"], [class*="to-violet-"],
+[class*="to-pink-"], [class*="to-emerald-"] { --tw-gradient-to: #737373 !important; }
+
+::selection { background: #ffffff !important; color: #000000 !important; }
+
+/* Scrollbar netral */
+* { scrollbar-color: rgba(255, 255, 255, 0.25) transparent; }

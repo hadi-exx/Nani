@@ -1,0 +1,9 @@
+# Virtual environment (dibuat ulang dengan: python3 -m venv .venv)
+.venv/
+
+# Cache bytecode Python
+__pycache__/
+*.py[cod]
+
+# Cache runtime (poster/stream anime, dsb.)
+cache/
