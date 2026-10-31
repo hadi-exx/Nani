@@ -10,7 +10,8 @@
     :root { --bg:#000000; --card:rgba(255,255,255,.05); --card-hover:rgba(255,255,255,.10); --primary:#ffffff; --pink:#d4d4d4; --text:#fafafa; --muted:#a3a3a3; --border:rgba(255,255,255,.22); }
     * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at 25% 15%, rgba(255,255,255,.10), transparent 42%), radial-gradient(circle at 80% 85%, rgba(255,255,255,.06), transparent 40%), var(--bg); background-attachment: fixed; color: var(--text); margin: 0; padding: 15px; padding-bottom: 120px; user-select: none; }
-    h1 { color: var(--text); text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 1px; margin: 10px 0 15px 0; background: var(--card); padding: 12px; border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(12px); }
+    h1 { color: var(--text); text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 1px; margin: 10px 0 15px 0; background: linear-gradient(90deg, #ffffff 0%, #e5e5e5 30%, #ffffff 50%, #a3a3a3 70%, #ffffff 100%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: titleShine 6s linear infinite; padding: 12px; border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(12px); }
+    @keyframes titleShine { to { background-position: 200% center; } }
     h2 { font-size: 14px; color: var(--text); margin: 20px 0 12px 0; background: var(--card); display: inline-block; padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; font-weight: 600; }
     .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
     input { flex: 1; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; font-weight: 600; font-size: 14px; }
@@ -53,8 +54,6 @@
     .repeat-active { background: var(--primary) !important; color: #000 !important; }
     .topbar { display: flex; align-items: stretch; gap: 10px; margin: 10px 0 15px 0; }
     .topbar h1 { flex: 1; margin: 0; }
-    .back-btn { display: flex; align-items: center; justify-content: center; width: 56px; flex: 0 0 56px; padding: 0; background: var(--card); color: var(--text); text-decoration: none; border: 1px solid var(--border); border-radius: 16px; font-size: 18px; }
-    .back-btn:active { transform: scale(.96); }
     .toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 10px 16px; font-size: 12px; font-weight: 600; max-width: 90%; text-align: center; z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .toast.show { opacity: 1; }
   </style>
@@ -62,7 +61,6 @@
 <body>
 
   <header class="topbar">
-    <a class="back-btn" href="/" aria-label="Kembali ke AI"><i class="fa-solid fa-arrow-left"></i></a>
     <h1>DIESKYBXYZ</h1>
   </header>
 
@@ -793,12 +791,8 @@
     });
 
     if (EMBED) {
+      // Tanpa tombol back di layar musik; layer ditutup lewat tombol kembali HP.
       document.body.classList.add('embed');
-      // Tombol back di layar musik menutup layer, tidak pindah halaman, supaya lagu tetap jalan
-      document.querySelector('.back-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        parent.postMessage({ type: 'music:close' }, location.origin);
-      });
     }
 
     function updateMediaSession(song) {

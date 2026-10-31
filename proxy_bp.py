@@ -17,10 +17,12 @@ import re
 import secrets
 import socket
 import threading
+import time
 import uuid
 from urllib.parse import parse_qs, quote, urljoin, urlparse
 
 import requests
+import urllib3.util.connection as _u3_connection
 from bs4 import BeautifulSoup
 from bs4.element import Stylesheet
 from flask import Blueprint, Response, g, jsonify, make_response, redirect, request, send_from_directory
@@ -173,9 +175,110 @@ def _assert_public(url):
     try:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror:
-        raise ProxyError(502, "Domain tidak ditemukan. Periksa kembali alamat yang kamu ketik.")
+        # DNS operator bisa membalas NXDOMAIN untuk situs yang diblokir.
+        # Kalau DoH masih menemukan IP publik, lanjutkan lewat jalur DoH.
+        if not any(not _is_private_ip(ip) for ip in _doh_resolve(host)):
+            raise ProxyError(502, "Domain tidak ditemukan. Periksa kembali alamat yang kamu ketik.")
+        return
     if any(_is_private_ip(i[4][0]) for i in infos):
         raise ProxyError(403, "Alamat jaringan internal tidak diizinkan.")
+
+
+# ---------- Resolusi DNS lewat DoH (bypass DNS operator yang memblokir) -----
+# Sebagian ISP memalsukan jawaban DNS untuk situs tertentu ke halaman blokir,
+# sehingga koneksi HTTPS gagal karena sertifikat tidak cocok. Di sini hostname
+# di-resolve lewat DoH agar dapat IP asli; koneksi tetap memakai SNI/hostname
+# asli sehingga validasi TLS tidak dilemahkan. Kalau DoH gagal, proxy kembali
+# memakai DNS sistem seperti biasa (PROXY_DOH=0 untuk mematikan fitur ini).
+DOH_ENABLED = os.getenv("PROXY_DOH", "1") != "0"
+DOH_URL = os.getenv("PROXY_DOH_URL", "https://cloudflare-dns.com/dns-query")
+DOH_TTL = 600
+DOH_FAIL_TTL = 60
+DOH_TIMEOUT = 4
+DOH_MAX_IPS = 4
+
+_doh_cache = {}
+_doh_lock = threading.Lock()
+_dns_override = threading.local()
+
+_orig_create_connection = _u3_connection.create_connection
+
+
+def _doh_resolve(host):
+    """Daftar IPv4 publik hasil DoH untuk host (list kosong kalau tidak ada)."""
+    host = (host or "").rstrip(".").lower()
+    if not host or not DOH_ENABLED:
+        return []
+    try:
+        ipaddress.ip_address(host)  # sudah berupa IP literal, tak perlu resolve
+        return []
+    except ValueError:
+        pass
+
+    now = time.time()
+    with _doh_lock:
+        hit = _doh_cache.get(host)
+        if hit and hit[1] > now:
+            return hit[0]
+
+    ips = []
+    try:
+        resp = requests.get(
+            DOH_URL,
+            params={"name": host, "type": "A"},
+            headers={"accept": "application/dns-json"},
+            timeout=DOH_TIMEOUT,
+        )
+        answers = (resp.json().get("Answer") or []) if resp.ok else []
+        for ans in answers:
+            if ans.get("type") != 1:
+                continue
+            ip = str(ans.get("data") or "")
+            if ip and not _is_private_ip(ip) and ip not in ips:
+                ips.append(ip)
+    except (requests.RequestException, ValueError, AttributeError):
+        ips = []
+
+    with _doh_lock:
+        if len(_doh_cache) > 500:
+            _doh_cache.clear()
+        _doh_cache[host] = (ips, now + (DOH_TTL if ips else DOH_FAIL_TTL))
+    return ips
+
+
+def _create_connection(address, *args, **kwargs):
+    """Sambung ke IP hasil DoH, tapi SNI/nama sertifikat tetap hostname asli."""
+    host, port = address[0], address[1]
+    ip = getattr(_dns_override, "ip", None)
+    if ip and getattr(_dns_override, "host", None) == host:
+        address = (ip, port)
+    return _orig_create_connection(address, *args, **kwargs)
+
+
+_u3_connection.create_connection = _create_connection
+
+
+def _requests_with_doh(method, url, **kwargs):
+    """requests.request() dengan resolusi DoH, plus cadangan IP lain."""
+    host = urlparse(url).hostname
+    ips = _doh_resolve(host)
+    if not ips:
+        return requests.request(method, url, **kwargs)
+
+    # POST tidak diulang agar tidak mengirim data dua kali.
+    candidates = ips[:DOH_MAX_IPS] if method in ("GET", "HEAD") else ips[:1]
+    prev = (getattr(_dns_override, "host", None), getattr(_dns_override, "ip", None))
+    last_error = None
+    try:
+        for ip in candidates:
+            _dns_override.host, _dns_override.ip = host, ip
+            try:
+                return requests.request(method, url, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
+        raise last_error
+    finally:
+        _dns_override.host, _dns_override.ip = prev
 
 
 def _normalize(raw):
@@ -224,7 +327,7 @@ def _fetch(method, url, sid, body, ctype, ua, accept, lang):
         if method == "POST" and body is not None and ctype:
             headers["Content-Type"] = ctype
         try:
-            resp = requests.request(
+            resp = _requests_with_doh(
                 method, current, headers=headers,
                 data=body if method == "POST" else None,
                 allow_redirects=False, timeout=TIMEOUT, stream=True,

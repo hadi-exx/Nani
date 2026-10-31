@@ -7,3 +7,6 @@ __pycache__/
 
 # Cache runtime (poster/stream anime, dsb.)
 cache/
+
+# Rahasia runtime
+data/cloud/rc.secret

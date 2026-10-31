@@ -4,8 +4,7 @@
    Konfigurasi & konstanta
    ========================================================================== */
 const API = '/cloud/api';
-let REMOTE = 'local:';
-let activeStorageMode = 'android';
+let REMOTE = 'cloud:';
 const FAV_KEY = 'cloud_favs_v2';
 const TEXT_EDIT_LIMIT = 2 * 1024 * 1024;
 const MAX_NAME_BYTES = 255;
@@ -23,7 +22,72 @@ const KIND_EXT = {
   office: ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp', 'rtf'],
 };
 const KIND_LABEL = { image: 'Gambar', video: 'Video', audio: 'Audio', pdf: 'PDF', text: 'Teks', office: 'Dokumen', other: 'File' };
-const KIND_ICON = { image: '🖼️', video: '🎬', audio: '🎵', pdf: '📕', text: '📝', office: '📘', other: '📄' };
+
+/* ---------- Ikon monokrom (SVG inline, mengikuti warna teks) ---------- */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const FILE_SHAPE = '<path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>';
+const ICONS = {
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h3.6a2 2 0 0 1 1.6.8L11.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  'folder-plus': '<path d="M3 7a2 2 0 0 1 2-2h3.6a2 2 0 0 1 1.6.8L11.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11.5v6"/><path d="M9 14.5h6"/>',
+  file: FILE_SHAPE,
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.4"/><path d="M21 15.5l-5-5L5 20"/>',
+  video: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.3l5 2.7-5 2.7z"/>',
+  audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.4"/><circle cx="16.5" cy="16" r="2.4"/>',
+  pdf: FILE_SHAPE + '<path d="M7.5 17.5h2a1.6 1.6 0 0 0 0-3.2h-2v5.2"/>',
+  text: FILE_SHAPE + '<path d="M8 13h8"/><path d="M8 16h8"/><path d="M8 19h4.5"/>',
+  office: FILE_SHAPE + '<rect x="7.5" y="12.5" width="9" height="6" rx="1"/><path d="M10.5 12.5v6"/><path d="M7.5 15.5h9"/>',
+  other: FILE_SHAPE,
+  star: '<path d="M12 3.5l2.65 5.37 5.93.86-4.29 4.18 1.01 5.9L12 16.99l-5.3 2.82 1.01-5.9-4.29-4.18 5.93-.86z"/>',
+  download: '<path d="M12 4v10"/><path d="M8 10.5l4 4 4-4"/><path d="M4 19h16"/>',
+  move: '<path d="M3 7a2 2 0 0 1 2-2h3.6a2 2 0 0 1 1.6.8L11.5 7H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9.5 13.5h6"/><path d="M13 11l2.5 2.5L13 16"/>',
+  rename: '<path d="M4 20h4l10.5-10.5-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  share: '<path d="M10 13.5a4.5 4.5 0 0 0 6.4 0l2.1-2.1a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1"/><path d="M14 10.5a4.5 4.5 0 0 0-6.4 0l-2.1 2.1a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1"/>',
+  trash: '<path d="M4 7h16"/><path d="M6.5 7l.9 12a1 1 0 0 0 1 1h7.2a1 1 0 0 0 1-1l.9-12"/><path d="M9.5 7V4.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7"/><path d="M10 11v5"/><path d="M14 11v5"/>',
+  refresh: '<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4.5V10H15"/>',
+  grid: '<rect x="3" y="3" width="7.2" height="7.2" rx="1.6"/><rect x="13.8" y="3" width="7.2" height="7.2" rx="1.6"/><rect x="3" y="13.8" width="7.2" height="7.2" rx="1.6"/><rect x="13.8" y="13.8" width="7.2" height="7.2" rx="1.6"/>',
+  list: '<path d="M8.5 6h12"/><path d="M8.5 12h12"/><path d="M8.5 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-3.6-3.6"/>',
+  cloud: '<path d="M7 18.5h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 12.2 3.3 3.3 0 0 0 7 18.5z"/>',
+  drive: '<path d="M4 15.5h16"/><path d="M6.5 15.5l2.6-9h5.8l2.6 9"/><path d="M4.5 19.5h15"/>',
+  select: '<rect x="3.5" y="3.5" width="17" height="17" rx="3.2"/><path d="M8 12.2l2.8 2.8L16.5 9"/>',
+  back: '<path d="M15 18l-6-6 6-6"/>',
+  up: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
+  upload: '<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 20h16"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  x: '<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+};
+
+function makeIcon(name, cls = '') {
+  const key = Object.prototype.hasOwnProperty.call(ICONS, name) ? name : 'file';
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.6');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', `ic${cls ? ` ${cls}` : ''}`);
+  svg.innerHTML = ICONS[key];
+  return svg;
+}
+
+function hydrateIcons(root = document) {
+  root.querySelectorAll('.icon-slot[data-icon]').forEach((slot) => {
+    const name = slot.dataset.icon;
+    if (slot.dataset.iconDone === name && slot.firstChild) return;
+    slot.replaceChildren(makeIcon(name));
+    slot.dataset.iconDone = name;
+  });
+}
+
+function setIcon(slot, name) {
+  if (!slot) return;
+  slot.dataset.icon = name;
+  hydrateIcons(slot.parentElement || document);
+}
+
+const KIND_ICON = { image: 'image', video: 'video', audio: 'audio', pdf: 'pdf', text: 'text', office: 'office', other: 'other' };
 
 /* ==========================================================================
    State
@@ -43,6 +107,7 @@ const state = {
   renderedCount: 0,
   observer: null,
   animateNext: false,
+  selectionMode: false,       // mode pilih aktif (tekan lama / menu Pilih)
   previewList: [],
   previewIndex: -1,
   previewDirty: false,
@@ -83,7 +148,7 @@ function fileKind(name) {
 }
 
 function iconFor(item) {
-  return item.IsDir ? '📁' : KIND_ICON[fileKind(item.Name)];
+  return item.IsDir ? 'folder' : KIND_ICON[fileKind(item.Name)];
 }
 
 function formatBytes(n) {
@@ -407,22 +472,37 @@ function favoritesAfterMove(oldPath, newPath) {
    Navigasi, breadcrumb, dan kategori
    ========================================================================== */
 function styleNav() {
-  const active = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold bg-blue-600/20 text-blue-400 border border-blue-500/30 transition';
-  const idle = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition border border-transparent';
   for (const [id, cat] of [['nav-all', 'all'], ['nav-fav', 'favorites']]) {
     const btn = $(id);
+    if (!btn) continue;
     const isActive = state.category === cat;
-    btn.className = isActive ? active : idle;
+    btn.classList.toggle('is-active', isActive);
     btn.setAttribute('aria-current', isActive ? 'page' : 'false');
   }
 }
 
+function syncMenuAvailability() {
+  const isFav = state.category === 'favorites';
+  for (const id of ['menuNewFolder', 'pickFileBtn', 'pickFolderBtn', 'uploadBtn']) {
+    const btn = $(id);
+    if (btn) btn.disabled = isFav;
+  }
+  const selectBtn = $('menuSelect');
+  if (selectBtn) selectBtn.disabled = state.visibleItems.length === 0;
+  const hint = $('fileHint');
+  if (hint && isFav) hint.textContent = 'Buka folder untuk mengunggah file';
+  else if (hint) updateFileHint();
+}
+
 function setCategory(cat, path = state.currentPath) {
+  const catChanged = state.category !== cat;
   state.category = cat;
   state.selected.clear();
+  state.selectionMode = false;
   updateBatchToolbar();
   styleNav();
-  $('opsPanel').classList.toggle('hidden', cat === 'favorites');
+  syncMenuAvailability();
+  closeMenu();
   if (cat === 'favorites') {
     state.listRequestId++;          // batalkan pemuatan folder yang masih berjalan
     setSyncStatus('hidden');
@@ -430,8 +510,45 @@ function setCategory(cat, path = state.currentPath) {
     renderList();
     updateNavButtons();
   } else {
+    // Saat keluar dari Favorit, daftar folder perlu digambar ulang walaupun
+    // data dari server sama persis (tidak memicu render di loadFiles).
+    if (catChanged && state.loaded) {
+      state.animateNext = false;
+      renderList();
+    }
     loadFiles(path);
   }
+}
+
+function openMenu() {
+  const panel = $('menuPanel');
+  const btn = $('menuBtn');
+  if (!panel || !btn) return;
+  panel.classList.remove('hidden');
+  btn.setAttribute('aria-expanded', 'true');
+  btn.setAttribute('aria-label', 'Tutup menu');
+  hydrateIcons(panel);
+}
+
+function closeMenu() {
+  const panel = $('menuPanel');
+  const btn = $('menuBtn');
+  if (!panel || !btn) return;
+  panel.classList.add('hidden');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-label', 'Buka menu');
+}
+
+function toggleMenu() {
+  const panel = $('menuPanel');
+  if (!panel) return;
+  if (panel.classList.contains('hidden')) openMenu();
+  else closeMenu();
+}
+
+function isMenuOpen() {
+  const panel = $('menuPanel');
+  return !!panel && !panel.classList.contains('hidden');
 }
 
 function navigate(path) {
@@ -466,7 +583,7 @@ function renderBreadcrumb() {
   wrap.replaceChildren();
 
   if (state.category === 'favorites') {
-    wrap.append(el('span', { class: 'font-semibold text-blue-400', text: '⭐ Favorit' }));
+    wrap.append(el('span', { class: 'font-semibold text-slate-100', text: 'Favorit' }));
     return;
   }
 
@@ -509,7 +626,7 @@ function setSyncStatus(mode) {
   const node = $('syncStatus');
   clearTimeout(syncHideTimer);
   if (mode === 'loading') {
-    node.textContent = activeStorageMode === 'drive' ? '⟳ Memperbarui dari Google Drive...' : '⟳ Memperbarui dari penyimpanan HP...';
+    node.textContent = '⟳ Memperbarui dari Rclone...';
     node.classList.remove('hidden');
   } else if (mode === 'done') {
     node.textContent = '✓ Sudah terbaru';
@@ -527,6 +644,7 @@ async function loadFiles(path = state.currentPath) {
   state.animateNext = !sameFolder;
   if (!sameFolder) {
     state.selected.clear();
+    state.selectionMode = false;
     updateBatchToolbar();
   }
   renderBreadcrumb();
@@ -576,11 +694,24 @@ async function loadFiles(path = state.currentPath) {
 }
 
 function refresh() {
-  if (state.category === 'favorites') renderList();
-  else loadFiles(state.currentPath);
+  if (state.category === 'favorites') { renderList(); return Promise.resolve(); }
+  return loadFiles(state.currentPath);
+}
+
+async function refreshAll() {
+  const btn = $('refreshBtn');
+  if (btn) { btn.classList.add('is-busy'); btn.disabled = true; }
+  try {
+    await Promise.all([loadStorage(), refresh()]);
+  } finally {
+    if (btn) { btn.classList.remove('is-busy'); btn.disabled = false; }
+  }
 }
 
 function afterChange() {
+  state.selected.clear();
+  state.selectionMode = false;
+  updateBatchToolbar();
   refresh();
   loadStorage();
 }
@@ -624,11 +755,11 @@ function emptyState() {
   const message = searching
     ? 'Tidak ada hasil pencarian'
     : favView
-      ? 'Belum ada favorit. Klik ☆ pada file atau folder untuk menambahkannya.'
+      ? 'Belum ada favorit. Tekan ikon bintang pada file atau folder untuk menambahkannya.'
       : 'Folder ini kosong';
-  const icon = favView ? '⭐' : searching ? '🔍' : '📂';
-  return el('div', { class: 'col-span-full text-center py-12 text-xs text-slate-500' }, [
-    el('div', { class: 'text-4xl mb-2', text: icon }),
+  const iconName = favView ? 'star' : searching ? 'search' : 'folder';
+  return el('div', { class: 'col-span-full empty-state' }, [
+    el('span', { class: 'empty-icon' }, [makeIcon(iconName)]),
     el('p', { text: message }),
   ]);
 }
@@ -642,7 +773,12 @@ function saveViewPref() {
 }
 
 function updateViewButton() {
-  $('viewToggleBtn').textContent = state.isGridView ? '📋 List' : '🎛️ Grid';
+  const btn = $('viewToggleBtn');
+  if (!btn) return;
+  setIcon(btn.querySelector('.icon-slot'), state.isGridView ? 'list' : 'grid');
+  const label = state.isGridView ? 'Tampilan daftar' : 'Tampilan kisi';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
 }
 
 function renderList() {
@@ -651,6 +787,7 @@ function renderList() {
   state.items = new Map(items.map((item) => [item.Path, item]));
   state.visibleItems = items;
   state.renderedCount = 0;
+  syncMenuAvailability();
   if (state.observer) { state.observer.disconnect(); state.observer = null; }
 
   // selection hanya berisi item yang sedang terlihat
@@ -710,6 +847,7 @@ function buildCard(item) {
   const selected = state.selected.has(item.Path);
   const fav = isFavorite(item.Path);
   const grid = state.isGridView;
+  const showCheck = state.selectionMode || selected;
 
   const meta = isFolder ? 'Folder' : formatBytes(item.Size);
   const location = state.category === 'favorites' ? `Lokasi: /${parentOf(item.Path)}` : '';
@@ -718,23 +856,27 @@ function buildCard(item) {
   const check = el('input', {
     type: 'checkbox',
     checked: selected,
-    class: 'w-4 h-4 rounded border-slate-700 accent-blue-600 cursor-pointer shrink-0',
+    class: `sel-check${showCheck ? '' : ' hidden'}`,
     attrs: { 'data-action': 'select', 'aria-label': `Pilih ${item.Name}` },
   });
 
   const star = el('button', {
     type: 'button',
-    class: `icon-btn text-sm ${fav ? 'fav-on' : 'text-slate-400'}`,
-    text: fav ? '★' : '☆',
+    class: `icon-btn star-btn ${fav ? 'fav-on' : 'text-slate-400'}`,
     title: fav ? 'Hapus dari favorit' : 'Tambah ke favorit',
     attrs: { 'data-action': 'fav', 'aria-label': fav ? 'Hapus dari favorit' : 'Tambah ke favorit', 'aria-pressed': String(fav) },
-  });
+  }, [makeIcon('star')]);
+
+  const tile = el('span', {
+    class: `icon-tile${isFolder ? ' icon-tile-folder' : ''}`,
+    attrs: { 'aria-hidden': 'true' },
+  }, [makeIcon(iconFor(item))]);
 
   const open = el('div', {
     class: `open-area flex-1 min-w-0 ${grid ? 'flex-col text-center' : ''}`,
     attrs: { 'data-action': 'open', role: 'button', tabindex: '0', title: item.Name },
   }, [
-    el('span', { class: 'card-icon', text: iconFor(item) }),
+    tile,
     el('div', { class: 'min-w-0 w-full' }, [
       el('p', { class: 'card-name', text: item.Name }),
       el('p', { class: 'card-meta', text: metaText }),
@@ -743,36 +885,38 @@ function buildCard(item) {
 
   const actionBtn = (action, icon, label, danger = false) => el('button', {
     type: 'button',
-    class: `icon-btn ${danger ? 'text-red-400' : 'text-amber-300'}`,
-    text: icon,
+    class: `icon-btn action-btn ${danger ? 'action-danger' : ''}`,
     title: label,
     attrs: { 'data-action': action, 'aria-label': `${label} ${item.Name}` },
-  });
+  }, [makeIcon(icon)]);
 
   const actions = [];
-  if (!isFolder) actions.push(actionBtn('download', '⬇️', 'Unduh'));
-  actions.push(actionBtn('move', '📁', 'Pindahkan'));
-  actions.push(actionBtn('rename', '✏️', 'Ubah nama'));
-  actions.push(actionBtn('share', '🔗', 'Bagikan'));
-  actions.push(actionBtn('delete', '🗑️', 'Hapus', true));
+  if (!isFolder) actions.push(actionBtn('download', 'download', 'Unduh'));
+  actions.push(actionBtn('move', 'move', 'Pindahkan'));
+  actions.push(actionBtn('rename', 'rename', 'Ubah nama'));
+  actions.push(actionBtn('share', 'share', 'Bagikan'));
+  actions.push(actionBtn('delete', 'trash', 'Hapus', true));
 
-  const cardClass = grid
-    ? `item-card item-grid flex flex-col gap-2 p-3.5 rounded-2xl border ${selected ? 'is-selected' : 'border-slate-800/80'}`
-    : `item-card flex items-center gap-3 p-3 rounded-2xl border ${selected ? 'is-selected' : 'border-slate-800/80'}`;
+  const cardClass = [
+    'item-card',
+    grid ? 'item-grid flex flex-col gap-2 p-3.5' : 'flex items-center gap-3 p-3',
+    selected ? 'is-selected' : '',
+    state.selectionMode ? 'is-selecting' : '',
+  ].filter(Boolean).join(' ');
 
   if (grid) {
     return el('div', { class: cardClass, dataset: { path: item.Path } }, [
-      el('div', { class: 'flex justify-between items-center' }, [check, star]),
+      el('div', { class: 'card-top' }, [check, star]),
       open,
-      el('div', { class: 'flex justify-center gap-1 pt-2 border-t border-slate-800/60' }, actions),
+      el('div', { class: 'item-actions item-actions-grid' }, actions),
     ]);
   }
 
   return el('div', { class: cardClass, dataset: { path: item.Path } }, [
     check,
-    star,
     open,
-    el('div', { class: 'flex items-center gap-1 shrink-0' }, actions),
+    star,
+    el('div', { class: 'item-actions' }, actions),
   ]);
 }
 
@@ -786,8 +930,12 @@ function replaceCard(item) {
    Pilihan banyak
    ========================================================================== */
 function toggleSelect(item, checked) {
-  if (checked) state.selected.add(item.Path);
-  else state.selected.delete(item.Path);
+  if (checked) {
+    state.selectionMode = true;
+    state.selected.add(item.Path);
+  } else {
+    state.selected.delete(item.Path);
+  }
   updateBatchToolbar();
   replaceCard(item);
 }
@@ -796,15 +944,23 @@ function updateBatchToolbar() {
   const count = state.selected.size;
   const total = state.visibleItems.length;
   const visibleSelected = state.visibleItems.filter((i) => state.selected.has(i.Path)).length;
+  const active = state.selectionMode || count > 0;
 
-  $('batchToolbar').classList.toggle('hidden', count === 0);
-  $('batchCount').textContent = `${count} item dipilih`;
+  $('batchToolbar').classList.toggle('hidden', !active);
+  $('batchCount').textContent = count
+    ? `${count} item dipilih`
+    : 'Pilih item dengan menekan lama';
+  $('moveSelBtn').disabled = count === 0;
+  $('deleteSelBtn').disabled = count === 0;
 
+  $('selectAllRow').classList.toggle('hidden', !state.selectionMode || total === 0);
   const cb = $('selectAllCb');
   cb.disabled = total === 0;
   cb.checked = total > 0 && visibleSelected === total;
   cb.indeterminate = visibleSelected > 0 && visibleSelected < total;
   $('selectAllLabel').textContent = cb.checked ? 'Batal pilih semua' : 'Pilih semua';
+
+  $('fileContainer').classList.toggle('selection-mode', state.selectionMode);
 }
 
 function refreshRenderedCards() {
@@ -814,7 +970,15 @@ function refreshRenderedCards() {
   });
 }
 
+function enableSelectionMode() {
+  state.selectionMode = true;
+  closeMenu();
+  updateBatchToolbar();
+  refreshRenderedCards();
+}
+
 function selectAllVisible() {
+  state.selectionMode = true;
   state.visibleItems.forEach((item) => state.selected.add(item.Path));
   updateBatchToolbar();
   refreshRenderedCards();
@@ -822,6 +986,7 @@ function selectAllVisible() {
 
 function clearSelection() {
   state.selected.clear();
+  state.selectionMode = false;
   updateBatchToolbar();
   refreshRenderedCards();
 }
@@ -874,6 +1039,7 @@ function handleCardAction(target) {
 
   switch (target.dataset.action) {
     case 'open':
+      if (state.selectionMode) return toggleSelect(item, !state.selected.has(item.Path));
       return item.IsDir ? openFolder(item.Path) : previewFile(item);
     case 'fav':
       return toggleFavorite(item);
@@ -900,21 +1066,27 @@ function downloadFile(item) {
 }
 
 async function createFolder() {
-  const input = $('newFolder');
-  const name = input.value.trim();
-  const error = validateName(name);
-  if (error) return showToast(error, 'error');
-  if (state.rawItems.some((i) => i.Name === name)) {
-    return showToast('Sudah ada item dengan nama itu di folder ini', 'error');
-  }
+  closeMenu();
+  const name = await askText({
+    title: 'Folder baru',
+    message: state.currentPath ? `Dibuat di /${state.currentPath}` : 'Dibuat di Root',
+    input: { placeholder: 'Nama folder' },
+    okText: 'Buat',
+    validate: (value) => {
+      const error = validateName(value);
+      if (error) return error;
+      if (state.rawItems.some((i) => i.Name === value)) {
+        return 'Sudah ada item dengan nama itu di folder ini';
+      }
+      return null;
+    },
+  });
+  if (!name) return;
 
-  const ok = await run($('createFolderBtn'),
+  const ok = await run(null,
     () => api('/operations/mkdir', { fs: REMOTE, remote: joinPath(state.currentPath, name) }),
     'Folder berhasil dibuat');
-  if (ok) {
-    input.value = '';
-    afterChange();
-  }
+  if (ok) afterChange();
 }
 
 async function renameItem(item) {
@@ -984,7 +1156,7 @@ async function deleteItem(item) {
    ========================================================================== */
 function updateFileHint() {
   const n = $('fileInput').files.length + $('folderInput').files.length;
-  $('fileHint').textContent = n ? `${n} file dipilih` : 'Pilih file/folder atau seret file ke halaman';
+  $('fileHint').textContent = n ? `${n} file dipilih · tekan Upload` : 'Belum ada file dipilih';
 }
 
 function setUploadStatus(label, ratio) {
@@ -999,9 +1171,13 @@ async function uploadSelectedFiles() {
   const input = $('fileInput');
   const folderInput = $('folderInput');
   const files = [...Array.from(input.files || []), ...Array.from(folderInput.files || [])];
-  if (files.length === 0) return showToast('Pilih file atau folder dulu', 'error');
+  if (files.length === 0) {
+    showToast('Pilih file atau folder dulu', 'error');
+    return false;
+  }
   const attempted = await uploadFiles(files, state.currentPath);
   if (attempted) { input.value = ''; folderInput.value = ''; updateFileHint(); }
+  return attempted;
 }
 
 /** Mengunggah daftar file ke folder aktif. Mengembalikan false jika dibatalkan atau tidak valid. */
@@ -1180,7 +1356,7 @@ function renderPreview() {
       audio.addEventListener('loadedmetadata', done, { once: true });
       audio.addEventListener('error', () => fail('Audio ini tidak bisa diputar di browser ini.'), { once: true });
       content.append(el('div', { class: 'w-full flex flex-col items-center gap-5 py-6' }, [
-        el('div', { class: 'text-6xl', text: '🎵' }),
+        el('span', { class: 'preview-icon' }, [makeIcon('audio')]),
         el('p', { class: 'text-sm font-semibold text-slate-200 break-all text-center', text: item.Name }),
         audio,
       ]));
@@ -1236,7 +1412,7 @@ async function renderTextPreview(item, token, content, done, fail) {
 function infoBlock(item, kind, note, isError = false) {
   const defaultNote = 'Preview tidak tersedia untuk jenis file ini. Gunakan tombol Unduh atau Buka tab baru.';
   return el('div', { class: 'w-full text-center py-8 px-4 space-y-3' }, [
-    el('div', { class: 'text-6xl', text: isError ? '⚠️' : KIND_ICON[kind] }),
+    el('span', { class: 'preview-icon' }, [makeIcon(isError ? 'x' : (KIND_ICON[kind] || 'file'))]),
     el('p', { class: 'text-sm font-semibold text-slate-200 break-all', text: item.Name }),
     el('p', { class: 'text-xs text-slate-400', text: `${KIND_LABEL[kind]} · ${formatBytes(item.Size)}` }),
     el('p', {
@@ -1384,7 +1560,7 @@ function renderMoveList() {
         title: blocked ? 'Tidak bisa masuk ke folder yang sedang dipindah' : f.Name,
         onclick: () => loadMoveFolder(f.Path),
       }, [
-        el('span', { text: '📁' }),
+        el('span', { class: 'move-icon' }, [makeIcon('folder')]),
         el('span', { class: 'truncate', text: f.Name }),
       ]);
     }));
@@ -1557,8 +1733,8 @@ function renderTrash() {
   $('trashEmptyBtn').disabled = count === 0;
 
   if (count === 0) {
-    wrap.replaceChildren(el('div', { class: 'text-center py-12 text-xs text-slate-500' }, [
-      el('div', { class: 'text-4xl mb-2', text: '🗑️' }),
+    wrap.replaceChildren(el('div', { class: 'empty-state' }, [
+      el('span', { class: 'empty-icon' }, [makeIcon('trash')]),
       el('p', { text: 'Tempat sampah kosong' }),
     ]));
     return;
@@ -1571,20 +1747,21 @@ function buildTrashRow(rec) {
   const from = parentOf(rec.origPath) ? `/${parentOf(rec.origPath)}` : 'Root';
   const meta = `${rec.isDir ? 'Folder' : formatBytes(rec.size)} · Asal: ${from} · sisa ${daysLeft} hari`;
   return el('div', { class: 'trash-row', dataset: { id: rec.id } }, [
-    el('span', { class: 'card-icon', text: rec.isDir ? '📁' : KIND_ICON[fileKind(rec.name)] }),
+    el('span', { class: `icon-tile trash-tile${rec.isDir ? ' icon-tile-folder' : ''}` }, [
+      makeIcon(rec.isDir ? 'folder' : KIND_ICON[fileKind(rec.name)]),
+    ]),
     el('div', { class: 'min-w-0 flex-1' }, [
       el('p', { class: 'card-name', text: rec.name, title: rec.name }),
       el('p', { class: 'card-meta', text: meta }),
     ]),
-    el('button', { type: 'button', class: 'btn-ghost whitespace-nowrap', text: '↩ Pulihkan', dataset: { trash: 'restore' } }),
+    el('button', { type: 'button', class: 'chip-btn whitespace-nowrap', text: 'Pulihkan', dataset: { trash: 'restore' } }),
     el('button', {
       type: 'button',
-      class: 'icon-btn text-red-400',
-      text: '✕',
+      class: 'icon-btn action-btn action-danger',
       title: 'Hapus permanen',
       attrs: { 'aria-label': `Hapus permanen ${rec.name}` },
       dataset: { trash: 'purge' },
-    }),
+    }, [makeIcon('trash')]),
   ]);
 }
 
@@ -1728,7 +1905,7 @@ function initDragAndDrop() {
    Event untuk modal baru
    ========================================================================== */
 function bindModalEvents() {
-  $('nav-trash').addEventListener('click', openTrash);
+  $('nav-trash').addEventListener('click', () => { closeMenu(); openTrash(); });
   $('moveSelBtn').addEventListener('click', () => openMoveDialog(selectedItems()));
 
   $('moveUpBtn').addEventListener('click', () => {
@@ -1766,9 +1943,69 @@ function bindModalEvents() {
 /* ==========================================================================
    Inisialisasi & event
    ========================================================================== */
+let pressTimer = null;
+let pressStart = null;
+let lastLongPressAt = 0;
+
+function bindCardLongPress(list) {
+  const cancel = () => {
+    clearTimeout(pressTimer);
+    pressStart = null;
+  };
+
+  list.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('button, input, a, select, textarea')) return;
+    const card = e.target.closest('[data-path]');
+    if (!card) return;
+    pressStart = { x: e.clientX, y: e.clientY };
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      const item = card.isConnected ? state.items.get(card.dataset.path) : null;
+      pressStart = null;
+      if (!item) return;
+      lastLongPressAt = Date.now();
+      state.selectionMode = true;
+      state.selected.add(item.Path);
+      updateBatchToolbar();
+      refreshRenderedCards();
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch { /* abaikan */ } }
+    }, 420);
+  });
+
+  list.addEventListener('pointermove', (e) => {
+    if (!pressStart) return;
+    if (Math.abs(e.clientX - pressStart.x) > 8 || Math.abs(e.clientY - pressStart.y) > 8) cancel();
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
+    list.addEventListener(type, cancel);
+  });
+
+  list.addEventListener('contextmenu', (e) => {
+    if (Date.now() - lastLongPressAt < 800) e.preventDefault();
+  });
+}
+
 function bindEvents() {
+  // Menu garis tiga
+  $('menuBtn').addEventListener('click', toggleMenu);
   $('nav-all').addEventListener('click', () => setCategory('all'));
   $('nav-fav').addEventListener('click', () => setCategory('favorites'));
+  $('menuSelect').addEventListener('click', enableSelectionMode);
+  $('menuNewFolder').addEventListener('click', createFolder);
+  $('pickFileBtn').addEventListener('click', () => $('fileInput').click());
+  $('pickFolderBtn').addEventListener('click', () => $('folderInput').click());
+  $('uploadBtn').addEventListener('click', async () => {
+    const done = await uploadSelectedFiles();
+    if (done) closeMenu();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!isMenuOpen()) return;
+    if (e.target.closest('#menuPanel') || e.target.closest('#menuBtn')) return;
+    closeMenu();
+  });
 
   $('searchInput').addEventListener('input', onSearchInput);
   $('sortSelect').addEventListener('change', renderList);
@@ -1778,8 +2015,7 @@ function bindEvents() {
     updateViewButton();
     renderList();
   });
-  $('refreshBtn').addEventListener('click', () => { loadStorage(); refresh(); });
-  $('quotaRefresh').addEventListener('click', loadStorage);
+  $('refreshBtn').addEventListener('click', refreshAll);
 
   $('btnBack').addEventListener('click', goBack);
   $('btnUp').addEventListener('click', goUp);
@@ -1788,19 +2024,28 @@ function bindEvents() {
     if (btn) navigate(btn.dataset.nav);
   });
 
-  $('newFolder').addEventListener('keydown', (e) => { if (e.key === 'Enter') createFolder(); });
-  $('createFolderBtn').addEventListener('click', createFolder);
   $('fileInput').addEventListener('change', updateFileHint);
   $('folderInput').addEventListener('change', updateFileHint);
-  $('uploadFolderBtn').addEventListener('click', () => $('folderInput').click());
-  $('uploadBtn').addEventListener('click', uploadSelectedFiles);
 
-  $('selectAllCb').addEventListener('change', (e) => (e.target.checked ? selectAllVisible() : clearSelection()));
+  $('selectAllCb').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      selectAllVisible();
+    } else {
+      state.selected.clear();
+      updateBatchToolbar();
+      refreshRenderedCards();
+    }
+  });
   $('clearSelBtn').addEventListener('click', clearSelection);
   $('deleteSelBtn').addEventListener('click', deleteSelected);
 
   const list = $('fileContainer');
   list.addEventListener('click', (e) => {
+    if (Date.now() - lastLongPressAt < 700) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const target = e.target.closest('[data-action]');
     if (!target || target.dataset.action === 'select') return;
     handleCardAction(target);
@@ -1818,6 +2063,7 @@ function bindEvents() {
       handleCardAction(e.target);
     }
   });
+  bindCardLongPress(list);
 
   $('closePreviewBtn').addEventListener('click', closePreview);
   $('prevBtn').addEventListener('click', () => gotoPreview(state.previewIndex - 1));
@@ -1844,6 +2090,7 @@ function bindEvents() {
       return;
     }
     if (e.key === 'Escape') {
+      if (isMenuOpen()) return closeMenu();
       if (isOpen('moveOverlay')) return closeMoveDialog();
       if (isOpen('shareOverlay')) return closeShare();
       if (isOpen('trashOverlay')) return closeTrash();
@@ -1857,56 +2104,14 @@ function bindEvents() {
   });
 }
 
-async function setStorageMode(mode) {
-  if (mode === activeStorageMode) return;
-  const buttons = [$('storageAndroid'), $('storageDrive')];
-  buttons.forEach((b) => { if (b) b.disabled = true; });
-  try {
-    const result = await api('/storage', { mode });
-    activeStorageMode = result.mode || mode;
-    REMOTE = activeStorageMode === 'drive' ? 'cloud:' : 'local:';
-    $('storageModeHint').textContent = activeStorageMode === 'drive'
-      ? 'Google Drive aktif · perubahan tersimpan ke Drive'
-      : 'Penyimpanan HP aktif · file lokal Android';
-    const active = activeStorageMode === 'drive' ? $('storageDrive') : $('storageAndroid');
-    const inactive = activeStorageMode === 'drive' ? $('storageAndroid') : $('storageDrive');
-    active.className = 'px-3 py-2 rounded-xl text-xs font-semibold border border-blue-500/40 bg-blue-600/20 text-blue-300';
-    inactive.className = 'px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800 text-slate-300';
-    state.currentPath = ''; state.loaded = false; state.rawItems = []; state.selected.clear();
-    await loadStorage(); await loadFiles('');
-    showToast(activeStorageMode === 'drive' ? 'Google Drive aktif' : 'Penyimpanan HP aktif', 'success');
-  } catch (err) {
-    showToast(`Gagal mengganti penyimpanan: ${err.message}`, 'error');
-  } finally {
-    buttons.forEach((b) => { if (b) b.disabled = false; });
-  }
-}
-
-async function initStorageMode() {
-  try {
-    const res = await fetch(API + '/storage', { cache: 'no-store' });
-    const data = await readJson(res);
-    activeStorageMode = data.mode || 'android';
-    REMOTE = activeStorageMode === 'drive' ? 'cloud:' : 'local:';
-    $('storageModeHint').textContent = activeStorageMode === 'drive'
-      ? 'Google Drive aktif · perubahan tersimpan ke Drive'
-      : 'Penyimpanan HP aktif · file lokal Android';
-    const active = activeStorageMode === 'drive' ? $('storageDrive') : $('storageAndroid');
-    const inactive = activeStorageMode === 'drive' ? $('storageAndroid') : $('storageDrive');
-    active.className = 'px-3 py-2 rounded-xl text-xs font-semibold border border-blue-500/40 bg-blue-600/20 text-blue-300';
-    inactive.className = 'px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700 bg-slate-800 text-slate-300';
-  } catch { /* default Android remains selected */ }
-  $('storageAndroid').addEventListener('click', () => setStorageMode('android'));
-  $('storageDrive').addEventListener('click', () => setStorageMode('drive'));
-}
-
 async function init() {
+  hydrateIcons(document);
   state.isGridView = loadViewPref();
   updateViewButton();
   styleNav();
+  syncMenuAvailability();
   bindEvents();
   bindModalEvents();
-  await initStorageMode();
   initDragAndDrop();
   renderBreadcrumb();
   updateNavButtons();

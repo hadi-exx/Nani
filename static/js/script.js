@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const setMenu = (open) => {
         menu.classList.toggle('is-hidden', !open);
         title.setAttribute('aria-expanded', String(open));
+        const grid = document.querySelector('.grid-container');
+        if (grid) grid.classList.toggle('open', open);
     };
 
     setMenu(false);

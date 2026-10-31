@@ -113,6 +113,36 @@ document.addEventListener('DOMContentLoaded', () => {
         statusMsg.className = 'status-msg hidden';
     }
 
+    function confirmDialog(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmTitle');
+            const msgEl = document.getElementById('confirmMessage');
+            const okBtn = document.getElementById('confirmOk');
+            const cancelBtn = document.getElementById('confirmCancel');
+
+            let settled = false;
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+            const done = (v) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                resolve(v);
+            };
+
+            titleEl.textContent = 'Konfirmasi';
+            msgEl.textContent = message;
+            okBtn.onclick = () => done(true);
+            cancelBtn.onclick = () => done(false);
+            modal.classList.remove('hidden');
+            modal.onclick = (e) => { if (e.target === modal) done(false); };
+        });
+    }
+
     async function apiFetch(url, options) {
         const res = await fetch(url, options);
         const data = await res.json().catch(() => ({}));
@@ -551,7 +581,8 @@ document.addEventListener('DOMContentLoaded', () => {
     historyList.addEventListener('click', async (e) => {
         const btn = e.target.closest('button.icon-btn.danger[data-id]');
         if (!btn) return;
-        if (!window.confirm('Hapus item ini dari riwayat?')) return;
+        const ok = await confirmDialog('Hapus item ini dari riwayat?');
+        if (!ok) return;
 
         try {
             await apiFetch(`${API}/api/history/${btn.dataset.id}`, { method: 'DELETE' });
@@ -562,7 +593,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnClearHistory.addEventListener('click', async () => {
-        if (!window.confirm('Hapus SEMUA riwayat download?')) return;
+        const ok = await confirmDialog('Hapus SEMUA riwayat download?');
+        if (!ok) return;
         try {
             await apiFetch(`${API}/api/history`, { method: 'DELETE' });
             loadHistory();

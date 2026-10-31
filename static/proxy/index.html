@@ -119,7 +119,6 @@
   <header>
     <a class="brand" id="brand" href="/" title="Kembali ke AI"><span class="logo">W</span><span>Web Proxy</span></a>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="nav-link" id="proxyBack" type="button" hidden style="border:0;background:none;font:inherit;cursor:pointer">← Kembali</button>
       <a class="nav-link" href="/proxy/logout">Keluar</a>
     </div>
   </header>
@@ -182,14 +181,6 @@
   $('#brand').addEventListener('click', function (e) {
     if (inFrame) { e.preventDefault(); window.parent.postMessage({ type: 'proxy:close' }, location.origin); }
   });
-
-  var backBtn = document.getElementById('proxyBack');
-  if (inFrame && backBtn) {
-    backBtn.hidden = false;
-    backBtn.addEventListener('click', function () {
-      window.parent.postMessage({ type: 'proxy:close' }, location.origin);
-    });
-  }
 
   function render() {
     var grid = $('#grid');

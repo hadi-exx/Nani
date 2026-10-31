@@ -10,16 +10,12 @@
   * { box-sizing: border-box; }
   body { margin:0; padding:15px; padding-bottom:0; background: radial-gradient(circle at 25% 15%, rgba(255,255,255,.10), transparent 42%), radial-gradient(circle at 80% 85%, rgba(255,255,255,.06), transparent 40%), var(--bg); background-attachment: fixed; color:var(--text); font-family:'Plus Jakarta Sans', system-ui, sans-serif; }
   html, body { max-width:100%; overflow-x:hidden; }
-  /* Topbar mengikuti halaman Musik: tombol kembali + judul DIESKYBXYZ */
+  /* Topbar mengikuti halaman Musik: judul DIESKYBXYZ */
   .topbar { display:flex; align-items:stretch; gap:10px; margin:10px 0 15px 0; }
   .topbar h1 { flex:1; margin:0; color:var(--text); text-align:center; font-size:22px; font-weight:700; letter-spacing:1px;
-               background:var(--card); padding:12px; border:1px solid var(--border); border-radius:16px; backdrop-filter:blur(12px);
+               background:linear-gradient(90deg, #ffffff 0%, #e5e5e5 30%, #ffffff 50%, #a3a3a3 70%, #ffffff 100%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: titleShine 6s linear infinite; padding:12px; border:1px solid var(--border); border-radius:16px; backdrop-filter:blur(12px);
                display:flex; align-items:center; justify-content:center; }
-  .back-btn { display:flex; align-items:center; justify-content:center; width:56px; flex:0 0 56px; padding:0;
-              background:var(--card); color:var(--text); text-decoration:none; border:1px solid var(--border); border-radius:16px; font-size:18px; }
-  .back-btn:hover { background:var(--card-hover); }
-  .back-btn:active { transform:scale(.96); }
-  .search-box { display:flex; gap:8px; margin-bottom:15px; }
+.search-box { display:flex; gap:8px; margin-bottom:15px; }
   form.search { flex:1 1 0; display:flex; gap:8px; min-width:0; }
   form.search input { flex:1; min-width:0; width:100%; }
   input[type=search] { flex:1; padding:12px 15px; min-height:44px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); outline:none; font-weight:600; font-size:14px; }
@@ -66,11 +62,11 @@
   .hc { position:relative; }
   .hc .x { position:absolute; top:6px; right:6px; padding:4px 8px; font-size:12px; background:rgba(0,0,0,.9); color:var(--text); }
   .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  @keyframes titleShine { to { background-position: 200% center; } }
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a class="back-btn" href="/" aria-label="Kembali ke dashboard"><i>&#8592;</i></a>
   <h1>DIESKYBXYZ</h1>
 </div>
 
@@ -333,17 +329,6 @@ route();
 // Mode embed: dibuka sebagai layer di dalam termux-ai (?embed=1)
 (function () {
   if (!new URLSearchParams(location.search).has("embed") || window.parent === window) return;
-  document.body.style.paddingTop = "44px";
-  const bar = document.createElement("div");
-  Object.assign(bar.style, { position: "fixed", top: "0", left: "0", right: "0", height: "44px",
-    display: "flex", alignItems: "center", padding: "0 10px", background: "#000000", zIndex: "1000" });
-  bar.innerHTML = '<button id="embed-back" type="button" aria-label="Kembali ke AI">←</button>';
-  const btn = bar.querySelector("button");
-  Object.assign(btn.style, { background: "#ffffff", color: "#000000", border: "0",
-    width: "36px", height: "32px", padding: "0", font: "inherit", fontSize: "18px", fontWeight: "700",
-    lineHeight: "1", cursor: "pointer" });
-  document.body.prepend(bar);
-  btn.onclick = () => parent.postMessage({ type: "anime:close" }, location.origin);
 
   function state() {
     const v = document.querySelector("video");

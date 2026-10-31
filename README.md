@@ -31,14 +31,14 @@ Dashboard lokal yang berjalan di Termux dan bisa dipasang sebagai aplikasi (PWA)
    ```
 8. Buka `http://localhost:5000` di Chrome, lalu pasang lewat ⋮ → **Install app**.
 
-Mode Google Drive (opsional): `pkg install rclone -y`, lalu `rclone config` dan buat remote bernama `cloud:`.
+Folder Cloud memakai **rclone** (wajib): `pkg install rclone -y`, lalu `rclone config` dan buat remote bernama `cloud:`.
 
 ## Yang perlu disiapkan
 
 1. **Paket Termux:** `pkg install python -y`
 2. **Paket Python:** `pip install flask requests python-dotenv yt-dlp beautifulsoup4`
-3. **Izin penyimpanan HP** (untuk Folder Cloud dan Downloader): `termux-setup-storage`, lalu izinkan di Android.
-4. **Rclone** (opsional, hanya untuk mode Google Drive): `pkg install rclone -y`, lalu `rclone config` dan buat remote bernama persis `cloud:`.
+3. **Izin penyimpanan HP** (untuk Downloader): `termux-setup-storage`, lalu izinkan di Android.
+4. **Rclone** (wajib untuk Folder Cloud): `pkg install rclone -y`, lalu `rclone config` dan buat remote bernama persis `cloud:`.
 5. **Internet** untuk pertama kali membuka halaman: ikon Lucide, Tailwind CDN, dan font dimuat dari luar.
 6. **Browser Chrome/Edge/Safari** untuk memasang PWA.
 
@@ -46,7 +46,7 @@ Mode Google Drive (opsional): `pkg install rclone -y`, lalu `rclone config` dan 
 
 1. Pasang dependensi (sekali saja):
    ```
-   pkg install python rclone -y        # rclone hanya perlu untuk mode Google Drive
+   pkg install python rclone -y        # rclone wajib untuk Folder Cloud
    pip install flask requests python-dotenv yt-dlp beautifulsoup4
    pip install -r requirements-media.txt
    ```
@@ -90,20 +90,19 @@ Setelah dipasang, shell dashboard (tampilan, ikon, manifest) tersimpan di cache.
 
 ## Folder Cloud
 
-- Halaman: `http://localhost:5000/cloud/`. Tombol kecil **← Back** di pojok kanan atas kembali ke dashboard.
-- Mode awal adalah **Penyimpanan HP**. File disimpan di `~/storage/shared/CloudV5Storage`. Jalankan `termux-setup-storage` jika akses penyimpanan belum diberikan; sebelum itu server memakai `~/CloudV5Storage`.
-- Mode **Google Drive** memerlukan rclone dengan remote bernama `cloud:` yang sudah dikonfigurasi. Rclone dijalankan otomatis sebagai proses pembantu di `127.0.0.1:5572`, bukan sebagai server untuk dibuka pengguna.
+- Halaman: `http://localhost:5000/cloud/`.
+- Penyimpanan **hanya memakai rclone**, dengan remote bernama `cloud:`. Tidak ada lagi mode penyimpanan HP/Android.
+- Rclone dijalankan otomatis sebagai proses pembantu di `127.0.0.1:5572`, bukan sebagai server untuk dibuka pengguna.
 - Fitur: daftar file, pencarian, favorit, pratinjau, unduh, buat folder, upload (maks 10 GB per file), pindah, ganti nama, dan tempat sampah (disimpan 30 hari).
 - Cache daftar folder disimpan di `data/cloud/cache.json`. Daftar tempat sampah ada di `data/cloud/trash.json`, dan isi item ada di folder `.cloud_trash`.
-- Tautan publik tidak tersedia untuk penyimpanan lokal.
-- Jangan hapus folder `CloudV5Storage` jika ingin menyimpan file. Menghapus data Termux dapat menghilangkan file di dalamnya.
+- Tautan publik mengikuti dukungan remote rclone yang dipakai (mis. Google Drive).
 
 ## Struktur
 
 ```
 termux-ai/
 ├── app.py                  # Flask: satu server untuk semua fitur (port 5000)
-├── cloud_core.py           # Logika Cloud: penyimpanan HP/Drive, cache, tempat sampah
+├── cloud_core.py           # Logika Cloud: rclone RC, cache, tempat sampah
 ├── cloud_bp.py             # Blueprint Cloud di /cloud
 ├── music.py, anime_bp.py,  # Blueprint Musik, Anime, Proxy, Downloader
 │   proxy_bp.py, anime_core.py, downloader_bp.py

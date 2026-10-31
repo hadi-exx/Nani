@@ -151,25 +151,7 @@ def _ui_file(name):
 # ---------------------------------------------------------------------------
 @bp.get("/api/storage")
 def get_storage():
-    return _json({"mode": core.STORAGE_MODE,
-                  "label": "Penyimpanan HP" if core.is_local_mode() else "Google Drive"})
-
-
-@bp.post("/api/storage")
-def set_storage():
-    body = _json_body()
-    mode = body.get("mode")
-    if mode not in ("android", "drive"):
-        raise CloudError("Pilihan penyimpanan tidak valid")
-    with core.mode_lock:
-        if mode == "drive" and not core.port_open(core.RCLONE_PORT):
-            core.start_rclone()
-        if mode == "drive" and core.rc_status() is None:
-            raise CloudError("Rclone belum siap. Pastikan remote cloud: sudah dikonfigurasi.", 503)
-        core.STORAGE_MODE = mode
-        core.cache_invalidate(prefixes=("",))
-    log.info("Mode penyimpanan diganti: %s", mode)
-    return _json({"ok": True, "mode": core.STORAGE_MODE})
+    return _json({"mode": "rclone", "label": "Rclone (cloud:)"})
 
 
 @bp.get("/api/cache/<kind>")
@@ -251,28 +233,7 @@ def upload():
     name = core.check_name(request.args.get("name", ""))
     length = _read_length(core.MAX_UPLOAD_BYTES)
 
-    if core.is_local_mode():
-        dest_dir = core._local_path(remote_dir, allow_empty=True)
-        if not os.path.isdir(dest_dir):
-            raise CloudError("Folder tujuan tidak ditemukan", 404)
-        dest = os.path.join(dest_dir, name)
-        if os.path.isdir(dest):
-            raise CloudError("Nama file bertabrakan dengan folder", 409)
-        tmp = dest + ".upload-" + uuid.uuid4().hex
-        try:
-            with open(tmp, "wb") as out:
-                _copy_body(length, out.write)
-            os.replace(tmp, dest)
-        finally:
-            try:
-                if os.path.exists(tmp):
-                    os.remove(tmp)
-            except OSError:
-                pass
-        core.cache_invalidate(exact=(remote_dir,))
-        return _json({"ok": True})
-
-    # Mode Drive: diteruskan langsung ke Rclone RC (multipart dibentuk di sini).
+    # Diteruskan langsung ke Rclone RC (multipart dibentuk di sini).
     boundary = uuid.uuid4().hex
     pre = (
         f"--{boundary}\r\n"
@@ -364,27 +325,8 @@ def stream():
     if length == 0:
         return Response(b"", status=code, headers=headers)
 
-    if core.is_local_mode():
-        return Response(_iter_local(remote, start, length), status=code,
-                        headers=headers, direct_passthrough=True)
     return Response(_iter_rclone(remote, start, length), status=code,
                     headers=headers, direct_passthrough=True)
-
-
-def _iter_local(remote, start, length):
-    path = core._local_path(remote)
-    try:
-        with open(path, "rb") as source:
-            source.seek(start)
-            remaining = length
-            while remaining > 0:
-                chunk = source.read(min(core.CHUNK, remaining))
-                if not chunk:
-                    break
-                yield chunk
-                remaining -= len(chunk)
-    except (BrokenPipeError, ConnectionResetError):
-        pass
 
 
 def _iter_rclone(remote, start, length):
@@ -423,7 +365,13 @@ def init_cloud():
     atexit.register(core.stop_rclone)
     core.load_cache()
     core.load_trash()
-    log.info("Mode penyimpanan awal: Android (%s).", core.LOCAL_ROOT)
+    # Satu-satunya backend adalah rclone, jadi proses bantuannya dinyalakan
+    # sejak awal. Kalau gagal, server tetap jalan dan errornya jelas di UI.
+    try:
+        core.start_rclone()
+        log.info("Cloud memakai Rclone (%s).", core.current_remote())
+    except (CloudError, OSError) as exc:
+        log.warning("Rclone belum siap: %s", exc)
     try:
         core.purge_expired()
     except (CloudError, OSError) as exc:

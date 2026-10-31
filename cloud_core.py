@@ -1,22 +1,17 @@
 """
-Cloud Drive - logika inti (penyimpanan HP / Rclone RC, cache, tempat sampah).
+Cloud Drive - logika inti (Rclone RC, cache, tempat sampah).
 Dipakai oleh cloud_bp.py dan dijalankan lewat app.py di port 5000.
 """
 import base64
 import http.client
 import json
 import logging
-import mimetypes
 import os
 import posixpath
-import shutil
-import stat as statmod
-import datetime
 import re
 import secrets
 import socket
 import subprocess
-import sys
 import threading
 import time
 import uuid
@@ -24,36 +19,45 @@ import uuid
 PORT = 5000                 # satu port untuk seluruh dashboard
 RCLONE_HOST = "127.0.0.1"
 RCLONE_PORT = 5572
-# Mode penyimpanan lokal Android. Tidak membutuhkan Rclone atau Google Drive.
-STORAGE_MODE = "android"  # "android" atau "drive"; default aman ke penyimpanan HP
-mode_lock = threading.RLock()
+# Satu-satunya backend penyimpanan: remote rclone bernama "cloud:".
+REMOTE = "cloud:"
 
-def is_local_mode():
-    return STORAGE_MODE == "android"
 
 def current_remote():
-    return "local:" if is_local_mode() else "cloud:"
-LOCAL_ROOT = os.path.expanduser("~/storage/shared")
-try:
-    os.makedirs(LOCAL_ROOT, exist_ok=True)
-    # Pastikan direktori benar-benar dapat ditulis.
-    _probe = os.path.join(LOCAL_ROOT, ".cloud_write_test")
-    with open(_probe, "wb") as _f:
-        _f.write(b"1")
-    os.remove(_probe)
-except OSError:
-    # Jika izin penyimpanan Android belum diberikan, gunakan fallback privat agar
-    # aplikasi tetap bisa dijalankan; jalankan termux-setup-storage untuk shared storage.
-    LOCAL_ROOT = os.path.join(os.path.expanduser("~"), "CloudV5Storage")
-    os.makedirs(LOCAL_ROOT, exist_ok=True)
-REMOTE = "local:"
+    return REMOTE
+
 RC_USER = "cloud"
-RC_PASS = secrets.token_urlsafe(32)  # acak setiap kali server dijalankan
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Aset UI cloud disajikan oleh cloud_bp.py dari static/cloud/
 DATA_DIR = os.path.join(BASE_DIR, "data", "cloud")
 os.makedirs(DATA_DIR, exist_ok=True)
+
+# Password Rclone RC disimpan di file agar proses induk & anak (mode debug
+# dengan reloader) memakai kredensial yang sama dan bisa memakai ulang rcd
+# yang sudah jalan, bukan saling menolak dengan 401.
+RC_SECRET_FILE = os.path.join(DATA_DIR, "rc.secret")
+
+
+def _load_rc_pass():
+    try:
+        with open(RC_SECRET_FILE, encoding="utf-8") as fh:
+            saved = fh.read().strip()
+        if saved:
+            return saved
+    except OSError:
+        pass
+    fresh = secrets.token_urlsafe(32)
+    try:
+        with open(RC_SECRET_FILE, "w", encoding="utf-8") as fh:
+            fh.write(fresh)
+        os.chmod(RC_SECRET_FILE, 0o600)
+    except OSError:
+        pass
+    return fresh
+
+
+RC_PASS = _load_rc_pass()
 
 # Hanya operasi ini yang boleh diteruskan ke Rclone
 ALLOWED_OPS = {
@@ -436,77 +440,8 @@ def rc_headers(extra=None):
     return headers
 
 
-def _local_path(remote, allow_empty=False):
-    remote = check_remote_path(remote, allow_empty=allow_empty)
-    root = os.path.realpath(LOCAL_ROOT)
-    target = os.path.realpath(os.path.join(root, *remote.split("/"))) if remote else root
-    if target != root and not target.startswith(root + os.sep):
-        raise CloudError("Path di luar penyimpanan tidak diizinkan", 403)
-    return target
-
-def _local_item(path):
-    # LOCAL_ROOT may be a Termux symlink to /storage/emulated/0.
-    # Normalize both sides before relpath so returned paths never contain ../.
-    root = os.path.realpath(LOCAL_ROOT)
-    path = os.path.realpath(path)
-    st = os.stat(path)
-    name = os.path.basename(path) or "Root"
-    is_dir = statmod.S_ISDIR(st.st_mode)
-    if path != root and not path.startswith(root + os.sep):
-        raise CloudError("Path di luar penyimpanan tidak diizinkan", 403)
-    return {"Name": name, "Path": os.path.relpath(path, root).replace(os.sep, "/") if path != root else "",
-            "Size": 0 if is_dir else st.st_size, "IsDir": is_dir,
-            "ModTime": datetime.datetime.fromtimestamp(st.st_mtime, datetime.timezone.utc).isoformat(),
-            "MimeType": "inode/directory" if is_dir else (mimetypes.guess_type(name)[0] or "application/octet-stream")}
-
-def _local_rc_json(rc_path, payload):
-    try:
-        if rc_path == "/operations/about":
-            usage = shutil.disk_usage(LOCAL_ROOT)
-            used = sum(os.path.getsize(os.path.join(dp, fn)) for dp, _, files in os.walk(LOCAL_ROOT) for fn in files if os.path.isfile(os.path.join(dp, fn)))
-            return 200, {"used": used, "total": usage.total, "free": max(0, usage.total-used)}
-        if rc_path == "/operations/list":
-            path = _local_path(payload.get("remote", ""), allow_empty=True)
-            if not os.path.isdir(path): return 400, {"error": "Path bukan folder"}
-            items=[]
-            for name in os.listdir(path):
-                if not payload.get("remote") and name == TRASH_DIR: continue
-                try: items.append(_local_item(os.path.join(path, name)))
-                except OSError: continue
-            items.sort(key=lambda x: (not x["IsDir"], x["Name"].casefold()))
-            return 200, {"list": items}
-        if rc_path == "/operations/stat":
-            path = _local_path(payload.get("remote", ""))
-            if not os.path.exists(path): return 404, {"error": "object not found"}
-            return 200, {"item": _local_item(path)}
-        if rc_path == "/operations/mkdir":
-            os.makedirs(_local_path(payload["remote"]), exist_ok=True); return 200, {"ok": True}
-        if rc_path in ("/operations/purge", "/operations/deletefile"):
-            path = _local_path(payload["remote"])
-            if not os.path.exists(path): return 404, {"error": "object not found"}
-            if os.path.isdir(path):
-                if rc_path == "/operations/deletefile": return 400, {"error": "Is a directory"}
-                shutil.rmtree(path)
-            else: os.remove(path)
-            return 200, {"ok": True}
-        if rc_path == "/operations/moveto":
-            src = _local_path(payload["srcRemote"]); dst = _local_path(payload["dstRemote"])
-            if not os.path.exists(src): return 404, {"error": "source not found"}
-            if os.path.exists(dst): return 400, {"error": "destination already exists"}
-            os.makedirs(os.path.dirname(dst), exist_ok=True); shutil.move(src, dst); return 200, {"ok": True}
-        if rc_path == "/operations/publiclink":
-            return 501, {"error": "Tautan publik tidak tersedia untuk penyimpanan lokal"}
-        return 404, {"error": "Operasi tidak didukung"}
-    except CloudError as e: return e.status, {"error": str(e)}
-    except FileNotFoundError: return 404, {"error": "object not found"}
-    except OSError as e: return 500, {"error": str(e)}
 
 def rc_json(rc_path, payload, timeout=600):
-    # Pemeriksaan kesiapan Rclone harus selalu menuju Rclone RC, bahkan saat
-    # mode yang aktif masih Android. Kalau tidak, pemilihan Google Drive akan
-    # menunggu 15 detik karena /core/version dijawab backend lokal.
-    if is_local_mode() and rc_path != "/core/version":
-        return _local_rc_json(rc_path, payload)
     # API internal aplikasi tetap memakai /operations/moveto, tetapi Rclone RC
     # menyediakan /operations/movefile untuk memindahkan satu file/folder.
     # Terjemahkan endpoint sebelum meneruskan permintaan ke Rclone.
@@ -572,6 +507,11 @@ def port_open(port):
 def start_rclone():
     global rclone_proc
     if port_open(RCLONE_PORT):
+        # Bisa jadi rcd milik proses induk saat mode debug reloader. Pakai ulang
+        # kalau kredensialnya cocok; kalau tidak, jangan sentuh proses asing.
+        if rc_status() == 200:
+            log.info("Rclone API sudah berjalan, dipakai ulang.")
+            return
         log.error("Port %d sudah dipakai proses lain (kemungkinan rclone rcd lama tanpa password). "
                   "Matikan proses itu dulu, lalu jalankan ulang.", RCLONE_PORT)
         raise CloudError("Rclone tidak siap. Periksa log server dan konfigurasi remote cloud:.", 503)
